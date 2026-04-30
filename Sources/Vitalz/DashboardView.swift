@@ -43,21 +43,21 @@ public struct DashboardView: View {
                             title: "Total Days Alive",
                             value: formatLargeNumber(stats.totalDaysAlive),
                             subtitle: "Every sunrise is a privilege.",
-                            chartData: generateChartData()
+                            chartData: [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
                         )
                         
                         ExpandableStatCard(
                             title: "Total Heartbeats",
                             value: formatLargeNumber(stats.estimatedTotalHeartbeats),
                             subtitle: "The rhythm of your existence.",
-                            chartData: generateChartData()
+                            chartData: [0.3, 0.45, 0.55, 0.7, 0.8, 0.9, 1.0]
                         )
                         
                         ExpandableStatCard(
                             title: "Remaining Summers",
                             value: String(format: "%.1f%%", percentageSummersAhead),
                             subtitle: "Make every season unforgettable.",
-                            chartData: generateChartData()
+                            chartData: [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
                         )
                     }
                     .padding(.horizontal, 24)
@@ -88,10 +88,6 @@ public struct DashboardView: View {
     
     private func formatLargeNumber(_ number: Int) -> String {
         return Self.numberFormatter.string(from: NSNumber(value: number)) ?? "\(number)"
-    }
-    
-    private func generateChartData() -> [CGFloat] {
-        return (0..<7).map { _ in CGFloat.random(in: 0.3...1.0) }
     }
 }
 

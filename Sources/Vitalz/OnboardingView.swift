@@ -69,6 +69,7 @@ public struct OnboardingView: View {
                     .padding()
             }
             .buttonStyle(.glassProminent)
+            .padding(.horizontal, 40)
         } else {
             Button(action: action) {
                 Text(title)
