@@ -26,29 +26,35 @@ jobs:
       - name: Generate Project
         run: xcodegen generate
 
+      - name: List Schemes
+        run: xcodebuild -list -project Vitalz.xcodeproj
+
       - name: Build for Simulator
         run: |
           xcodebuild build \
             -project Vitalz.xcodeproj \
             -scheme Vitalz \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
-            -derivedDataPath build \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath derived_data \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_IDENTITY="" \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            COMPILER_INDEX_STORE_ENABLE=NO
 
       - name: Debug Build Output
         if: failure()
         run: |
-          ls -R build || echo "Build directory not found"
-          find . -name "*.app"
+          echo "Show Build Settings:"
+          xcodebuild -showBuildSettings -project Vitalz.xcodeproj -scheme Vitalz
+          echo "Listing derived data:"
+          ls -R derived_data || echo "Derived data not found"
 
       - name: Zip for Appetize
         run: |
-          # Find the .app folder in the build directory
-          APP_PATH=$(find build -name "*.app" -type d | head -n 1)
+          # Find the .app folder in the derived data directory
+          APP_PATH=$(find derived_data -name "*.app" -type d | head -n 1)
           if [ -z "$APP_PATH" ]; then
             echo "Error: Could not find .app file"
             exit 1
