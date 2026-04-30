@@ -68,6 +68,14 @@ jobs:
           # Move zip back to root
           mv Vitalz.app.zip $GITHUB_WORKSPACE/
 
+      - name: Upload to Appetize.io
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          curl "https://${{ secrets.APPETIZE_TOKEN }}@api.appetize.io/v1/apps" \
+            -F "file=@Vitalz.app.zip" \
+            -F "platform=ios"
+
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
