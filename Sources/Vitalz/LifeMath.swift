@@ -6,6 +6,9 @@ public struct LifeStats {
     public let totalSecondsAlive: Int
     public let estimatedTotalHeartbeats: Int
     public let estimatedHoursSlept: Double
+    public let estimatedBreathsTaken: Int
+    public let distanceTraveledSpaceKm: Int
+    public let estimatedBlinks: Int
     public let percentageOf80YearLifeExpectancy: Double
 }
 
@@ -24,6 +27,9 @@ public struct LifeMath {
     private let heartbeatsPerMinute = 70
     private let sleepHoursPerDay = 8.0
     private let expectedLifeYears: Double = 80.0
+    private let breathsPerMinute = 16
+    private let blinksPerMinuteAwake = 15
+    private let earthOrbitSpeedKmPerSecond = 29.78
     
     /// Initialize with a specific Date of Birth.
     public init(dateOfBirth: Date) {
@@ -52,16 +58,26 @@ public struct LifeMath {
         let estimatedHoursSlept = Double(totalDaysAlive) * sleepHoursPerDay
         
         // Exact percentage of an 80-year life lived
-        // Using average year length (365.25 days) to account for leap years over 80 years
         let lifeExpectancySeconds = expectedLifeYears * 365.25 * 24.0 * 60.0 * 60.0
         let percentage = (Double(totalSecondsAlive) / lifeExpectancySeconds) * 100.0
         let percentageOf80YearLifeExpectancy = max(0.0, percentage) 
+        
+        // New stats
+        let estimatedBreathsTaken = Int((Double(totalSecondsAlive) / 60.0) * Double(breathsPerMinute))
+        let distanceTraveledSpaceKm = Int(Double(totalSecondsAlive) * earthOrbitSpeedKmPerSecond)
+        
+        let awakeHoursPerDay = 24.0 - sleepHoursPerDay
+        let awakeMinutesTotal = Double(totalDaysAlive) * awakeHoursPerDay * 60.0
+        let estimatedBlinks = Int(awakeMinutesTotal * Double(blinksPerMinuteAwake))
         
         return LifeStats(
             totalDaysAlive: totalDaysAlive,
             totalSecondsAlive: totalSecondsAlive,
             estimatedTotalHeartbeats: estimatedTotalHeartbeats,
             estimatedHoursSlept: estimatedHoursSlept,
+            estimatedBreathsTaken: estimatedBreathsTaken,
+            distanceTraveledSpaceKm: distanceTraveledSpaceKm,
+            estimatedBlinks: estimatedBlinks,
             percentageOf80YearLifeExpectancy: percentageOf80YearLifeExpectancy
         )
     }

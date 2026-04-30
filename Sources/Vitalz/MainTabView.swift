@@ -20,13 +20,6 @@ public struct MainTabView: View {
                     Image(systemName: "flag.fill")
                     Text("Milestones")
                 }
-            
-            SettingsView()
-                .tag(2)
-                .tabItem {
-                    Image(systemName: "slider.horizontal.3")
-                    Text("Settings")
-                }
         }
         .accentColor(.vitalzBlue)
         // Global configuration to force TabBar to match our pure black luxury aesthetic
