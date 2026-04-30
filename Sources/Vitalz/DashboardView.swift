@@ -6,11 +6,22 @@ struct CardData: Identifiable, Equatable {
     let value: String
     let subtitle: String
     let chartData: [CGFloat]
+    let icon: String
+    let color: Color
+    var isFullWidth: Bool = false
 }
 
 public struct DashboardView: View {
     @AppStorage("userDOBTimestamp") private var userDOBTimestamp: Double = 0
-    @AppStorage("userName") private var userName: String = "John Doe"
+    @AppStorage("userName") private var userName: String = "Me"
+    
+    // Visibility Toggles
+    @AppStorage("showSecondsAlive") private var showSecondsAlive: Bool = true
+    @AppStorage("showHeartbeats") private var showHeartbeats: Bool = true
+    @AppStorage("showBreathsTaken") private var showBreathsTaken: Bool = true
+    @AppStorage("showTimesBlinked") private var showTimesBlinked: Bool = true
+    @AppStorage("showHairGrowth") private var showHairGrowth: Bool = true
+    @AppStorage("showSpaceTraveler") private var showSpaceTraveler: Bool = true
     
     @State private var currentDate = Date()
     @State private var stats: LifeStats? = nil
@@ -31,92 +42,183 @@ public struct DashboardView: View {
     
     public var body: some View {
         ZStack {
-            Color.vitalzBackground.ignoresSafeArea()
+            Color.black.ignoresSafeArea()
             
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 32) {
-                    // Profile Header
-                    VStack(spacing: 8) {
-                        Button(action: { showingSettings = true }) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.vitalzCard)
-                                    .frame(width: 80, height: 80)
-                                    .shadow(color: .vitalzShadow, radius: 10, x: 0, y: 5)
-                                
-                                Image(systemName: "person.crop.circle.fill")
-                                    .resizable()
-                                    .foregroundColor(.vitalzBlue)
-                                    .frame(width: 80, height: 80)
-                            }
+                VStack(spacing: 20) {
+                    // Header
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(userName)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.gray)
+                            
+                            Text(Date(), style: .date)
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(.white)
                         }
                         
-                        Text(userName)
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(.vitalzText)
+                        Spacer()
                         
-                        Text("V I T A L Z")
-                            .font(.system(size: 11, weight: .bold, design: .default))
-                            .foregroundColor(.vitalzBlue)
-                            .kerning(4)
+                        Button(action: { showingSettings = true }) {
+                            Image(systemName: "gearshape")
+                                .font(.system(size: 20))
+                                .foregroundColor(.white)
+                                .padding(12)
+                                .background(Color.white.opacity(0.1))
+                                .clipShape(Circle())
+                        }
                     }
-                    .padding(.top, 24)
-                    .padding(.bottom, 16)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
                     
                     if let stats = stats {
-                        let cards = generateCards(from: stats)
+                        let allCards = generateCards(from: stats)
+                        let topCard = showSecondsAlive ? allCards.first(where: { $0.title == "Seconds Alive" }) : nil
                         
-                        LazyVStack(spacing: 24) {
-                            ForEach(cards) { card in
-                                if selectedCard?.id != card.id {
-                                    CompactCardView(card: card, animation: animation)
-                                        .onTapGesture {
-                                            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                                                selectedCard = card
-                                            }
-                                        }
-                                } else {
-                                    Color.clear
-                                        .frame(height: 180) // Placeholder to maintain scroll position
+                        var activeMiddleTitles: [String] = []
+                        if showHeartbeats { activeMiddleTitles.append("Heartbeats") }
+                        if showBreathsTaken { activeMiddleTitles.append("Breaths Taken") }
+                        if showTimesBlinked { activeMiddleTitles.append("Times Blinked") }
+                        if showHairGrowth { activeMiddleTitles.append("Hair Growth") }
+                        let middleCards = allCards.filter { activeMiddleTitles.contains($0.title) }
+                        
+                        var activeBottomTitles: [String] = ["Full Moons", "Jupiter Age", "Sleep", "Phone Void", "Caffeine River"]
+                        if showSpaceTraveler { activeBottomTitles.insert("Space Traveler", at: 0) }
+                        let bottomCards = allCards.filter { activeBottomTitles.contains($0.title) }
+                        
+                        let percentageLived = stats.percentageOf80YearLifeExpectancy
+                        
+                        VStack(spacing: 16) {
+                            if let top = topCard {
+                                GridCardView(card: top, animation: animation, isSelected: selectedCard?.id == top.id)
+                                    .onTapGesture { selectCard(top) }
+                            }
+                            
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                                ForEach(middleCards) { card in
+                                    GridCardView(card: card, animation: animation, isSelected: selectedCard?.id == card.id)
+                                        .onTapGesture { selectCard(card) }
+                                }
+                            }
+                            
+                            // Ad Space Mockup
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text("SPONSORED")
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundColor(.gray)
+                                        .kerning(1.2)
+                                    Spacer()
+                                    Image(systemName: "arrow.up.right.square")
+                                        .foregroundColor(.gray)
+                                }
+                                
+                                Text("Your brand could be here")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.white)
+                                
+                                Text("Reach mindful users tracking their life stats")
+                                    .font(.system(size: 15, weight: .regular))
+                                    .foregroundColor(.gray)
+                                
+                                Spacer(minLength: 20)
+                                Text("ads@vitalz.app")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.gray.opacity(0.6))
+                            }
+                            .padding(24)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(white: 0.12))
+                            .cornerRadius(24)
+                            
+                            // Life Loading Bar
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text("Life Loading")
+                                        .font(.system(size: 15))
+                                        .foregroundColor(.gray)
+                                    Spacer()
+                                    Image(systemName: "sun.max.fill")
+                                        .foregroundColor(.gray)
+                                }
+                                
+                                GeometryReader { geo in
+                                    ZStack(alignment: .leading) {
+                                        Capsule()
+                                            .fill(Color.white.opacity(0.1))
+                                            .frame(height: 12)
+                                        
+                                        Capsule()
+                                            .fill(Color.green.opacity(0.8))
+                                            .frame(width: geo.size.width * CGFloat(percentageLived / 100.0), height: 12)
+                                    }
+                                }
+                                .frame(height: 12)
+                                
+                                HStack {
+                                    Text("Life Completed")
+                                        .font(.system(size: 15))
+                                        .foregroundColor(.gray)
+                                    Spacer()
+                                    Text(String(format: "%.1f%%", percentageLived))
+                                        .font(.system(size: 18, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
+                            }
+                            .padding(24)
+                            .background(Color(white: 0.12))
+                            .cornerRadius(24)
+                            
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                                ForEach(bottomCards) { card in
+                                    GridCardView(card: card, animation: animation, isSelected: selectedCard?.id == card.id)
+                                        .onTapGesture { selectCard(card) }
                                 }
                             }
                         }
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, 16)
                         .padding(.bottom, 80)
-                    } else {
-                        Color.clear.frame(height: 400)
                     }
                 }
             }
             .safeAreaInset(edge: .top) {
-                // Top Blur for readability
-                Color.clear
-                    .frame(height: 0)
-                    .background(.ultraThinMaterial)
+                Color.clear.frame(height: 0).background(.ultraThinMaterial)
             }
             
-            // Expanded Card Overlay
+            // Expanded Overlay
             if let card = selectedCard {
+                Color.black.opacity(0.7)
+                    .ignoresSafeArea()
+                    .onTapGesture { closeCard() }
+                
                 ExpandedCardView(card: card, animation: animation) {
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                        selectedCard = nil
-                    }
+                    closeCard()
                 }
+                .padding(24) // Leaves space around the card so it doesn't take the full screen
                 .zIndex(1)
             }
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
         }
-        .onAppear {
-            updateStats(for: currentDate)
-        }
-        .onChange(of: userDOBTimestamp) { _ in
-            updateStats(for: currentDate)
-        }
+        .onAppear { updateStats(for: currentDate) }
+        .onChange(of: userDOBTimestamp) { _ in updateStats(for: currentDate) }
         .onReceive(timer) { input in
             currentDate = input
             updateStats(for: input)
+        }
+    }
+    
+    private func selectCard(_ card: CardData) {
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+            selectedCard = card
+        }
+    }
+    
+    private func closeCard() {
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+            selectedCard = nil
         }
     }
     
@@ -130,55 +232,93 @@ public struct DashboardView: View {
         return Self.numberFormatter.string(from: NSNumber(value: number)) ?? "\(number)"
     }
     
+    private func formatDouble(_ number: Double, decimals: Int = 1) -> String {
+        return String(format: "%.\(decimals)f", number)
+    }
+    
+    private func formatMillions(_ number: Int) -> String {
+        let m = Double(number) / 1_000_000.0
+        return String(format: "%.1fM", m)
+    }
+    
+    private func formatBillions(_ number: Int) -> String {
+        let b = Double(number) / 1_000_000_000.0
+        return String(format: "%.1fB", b)
+    }
+    
     private func generateCards(from stats: LifeStats) -> [CardData] {
-        let percentageSummersAhead = max(0.0, 100.0 - stats.percentageOf80YearLifeExpectancy)
         let ascendingData: [CGFloat] = [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-        let descendingData: [CGFloat] = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
+        let yellowColor = Color(red: 0.2, green: 0.15, blue: 0.05)
+        let redColor = Color(red: 0.2, green: 0.05, blue: 0.08)
+        let purpleColor = Color(red: 0.1, green: 0.05, blue: 0.2)
+        let blueColor = Color(red: 0.05, green: 0.1, blue: 0.2)
         
         return [
-            CardData(title: "Total Days Alive", value: formatLargeNumber(stats.totalDaysAlive), subtitle: "Every sunrise is a privilege.", chartData: ascendingData),
-            CardData(title: "Total Heartbeats", value: formatLargeNumber(stats.estimatedTotalHeartbeats), subtitle: "The rhythm of your existence.", chartData: ascendingData),
-            CardData(title: "Breaths Taken", value: formatLargeNumber(stats.estimatedBreathsTaken), subtitle: "Inhale the future, exhale the past.", chartData: ascendingData),
-            CardData(title: "Times Blinked", value: formatLargeNumber(stats.estimatedBlinks), subtitle: "Capturing moments in the blink of an eye.", chartData: ascendingData),
-            CardData(title: "Space Traveled (km)", value: formatLargeNumber(stats.distanceTraveledSpaceKm), subtitle: "Orbiting the sun at 29.78 km/s.", chartData: ascendingData),
-            CardData(title: "Remaining Summers", value: String(format: "%.1f%%", percentageSummersAhead), subtitle: "Make every season unforgettable.", chartData: descendingData)
+            CardData(id: UUID(), title: "Seconds Alive", value: formatLargeNumber(stats.totalSecondsAlive), subtitle: "and counting...", chartData: ascendingData, icon: "stopwatch", color: yellowColor, isFullWidth: true),
+            CardData(id: UUID(), title: "Heartbeats", value: formatMillions(stats.estimatedTotalHeartbeats), subtitle: "@ 70 bpm", chartData: ascendingData, icon: "heart", color: redColor),
+            CardData(id: UUID(), title: "Breaths Taken", value: formatMillions(stats.estimatedBreathsTaken), subtitle: "@ 16/min", chartData: ascendingData, icon: "wind", color: redColor),
+            CardData(id: UUID(), title: "Times Blinked", value: formatMillions(stats.estimatedBlinks), subtitle: "while awake", chartData: ascendingData, icon: "eye", color: redColor),
+            CardData(id: UUID(), title: "Hair Growth", value: formatDouble(stats.hairGrowthMeters) + "m", subtitle: "of hair grown", chartData: ascendingData, icon: "scissors", color: redColor),
+            CardData(id: UUID(), title: "Space Traveler", value: formatBillions(stats.distanceTraveledSpaceKm), subtitle: "km around Sun", chartData: ascendingData, icon: "location.north.fill", color: purpleColor),
+            CardData(id: UUID(), title: "Full Moons", value: formatLargeNumber(stats.fullMoonsWitnessed), subtitle: "witnessed", chartData: ascendingData, icon: "moon", color: purpleColor),
+            CardData(id: UUID(), title: "Jupiter Age", value: formatDouble(stats.jupiterAge, decimals: 2), subtitle: "years on Jupiter", chartData: ascendingData, icon: "globe", color: purpleColor),
+            CardData(id: UUID(), title: "Sleep", value: formatDouble(stats.estimatedHoursSlept / 24.0 / 365.25) + " yrs", subtitle: "spent dreaming", chartData: ascendingData, icon: "moon.zzz", color: blueColor),
+            CardData(id: UUID(), title: "Phone Void", value: formatDouble(stats.phoneVoidYears) + " yrs", subtitle: "lost to screens", chartData: ascendingData, icon: "iphone", color: blueColor),
+            CardData(id: UUID(), title: "Caffeine River", value: formatLargeNumber(stats.caffeineRiverLiters) + "L", subtitle: "of coffee", chartData: ascendingData, icon: "cup.and.saucer", color: redColor)
         ]
     }
 }
 
 // MARK: - Subcomponents
 
-struct CompactCardView: View {
+struct GridCardView: View {
     let card: CardData
     var animation: Namespace.ID
+    var isSelected: Bool
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(card.title.uppercased())
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.gray)
-                .kerning(1.5)
-                .matchedGeometryEffect(id: "title\(card.id)", in: animation)
-            
-            Text(card.value)
-                .font(.system(size: 42, weight: .bold, design: .default))
-                .foregroundStyle(Color.vitalzGradient)
-                .shadow(color: Color.vitalzBlue.opacity(0.15), radius: 8, x: 0, y: 3)
-                .matchedGeometryEffect(id: "value\(card.id)", in: animation)
-            
-            Text(card.subtitle)
-                .font(.system(size: 15, weight: .light, design: .default))
-                .foregroundColor(.vitalzText.opacity(0.7))
-                .matchedGeometryEffect(id: "subtitle\(card.id)", in: animation)
+        ZStack {
+            if isSelected {
+                Color.clear
+                    .frame(height: card.isFullWidth ? 140 : 160)
+            } else {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text(card.title)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.gray)
+                            .matchedGeometryEffect(id: "title\(card.id)", in: animation)
+                        Spacer()
+                        Image(systemName: card.icon)
+                            .foregroundColor(card.color == Color(red: 0.2, green: 0.15, blue: 0.05) ? .yellow : (card.color == Color(red: 0.2, green: 0.05, blue: 0.08) ? .red : .blue))
+                            .opacity(0.8)
+                            .matchedGeometryEffect(id: "icon\(card.id)", in: animation)
+                    }
+                    
+                    Spacer()
+                    
+                    Text(card.value)
+                        .font(.system(size: card.isFullWidth ? 36 : 28, weight: .bold))
+                        .foregroundColor(card.color == Color(red: 0.2, green: 0.15, blue: 0.05) ? .yellow : (card.color == Color(red: 0.2, green: 0.05, blue: 0.08) ? Color(red: 1.0, green: 0.6, blue: 0.6) : .white))
+                        .minimumScaleFactor(0.5)
+                        .lineLimit(1)
+                        .matchedGeometryEffect(id: "value\(card.id)", in: animation)
+                    
+                    Text(card.subtitle)
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundColor(.gray)
+                        .matchedGeometryEffect(id: "subtitle\(card.id)", in: animation)
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: card.isFullWidth ? 140 : 160)
+                .background(
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(card.color)
+                        .matchedGeometryEffect(id: "bg\(card.id)", in: animation)
+                )
+            }
         }
-        .padding(32)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color.vitalzCard
-                .matchedGeometryEffect(id: "bg\(card.id)", in: animation)
-        )
-        .cornerRadius(24)
-        .shadow(color: .vitalzShadow, radius: 15, x: 0, y: 10)
     }
 }
 
@@ -190,86 +330,81 @@ struct ExpandedCardView: View {
     @State private var showDetails = false
     
     var body: some View {
-        VStack {
+        VStack(alignment: .leading, spacing: 20) {
             HStack {
+                Text(card.title)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.gray)
+                    .matchedGeometryEffect(id: "title\(card.id)", in: animation)
                 Spacer()
+                Image(systemName: card.icon)
+                    .foregroundColor(.white)
+                    .opacity(0.8)
+                    .matchedGeometryEffect(id: "icon\(card.id)", in: animation)
+                
                 Button(action: onClose) {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.title)
+                        .font(.title2)
                         .foregroundColor(.gray)
                 }
-                .padding()
+                .padding(.leading, 8)
             }
             
-            Spacer()
+            Text(card.value)
+                .font(.system(size: 48, weight: .bold))
+                .foregroundColor(card.color == Color(red: 0.2, green: 0.15, blue: 0.05) ? .yellow : .white)
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
+                .matchedGeometryEffect(id: "value\(card.id)", in: animation)
             
-            VStack(alignment: .leading, spacing: 24) {
-                Text(card.title.uppercased())
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.gray)
-                    .kerning(1.5)
-                    .matchedGeometryEffect(id: "title\(card.id)", in: animation)
-                
-                Text(card.value)
-                    .font(.system(size: 56, weight: .bold, design: .default))
-                    .foregroundStyle(Color.vitalzGradient)
-                    .shadow(color: Color.vitalzBlue.opacity(0.2), radius: 10, x: 0, y: 5)
-                    .minimumScaleFactor(0.5)
-                    .lineLimit(1)
-                    .matchedGeometryEffect(id: "value\(card.id)", in: animation)
-                
-                Text(card.subtitle)
-                    .font(.system(size: 18, weight: .light, design: .default))
-                    .foregroundColor(.vitalzText.opacity(0.8))
-                    .matchedGeometryEffect(id: "subtitle\(card.id)", in: animation)
-                
-                if showDetails {
-                    VStack(spacing: 32) {
-                        Divider().padding(.vertical, 8)
-                        
-                        // Animated Bar Chart
-                        HStack(alignment: .bottom, spacing: 16) {
-                            ForEach(0..<card.chartData.count, id: \.self) { index in
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(Color.vitalzGradient)
-                                    .frame(width: 30, height: 120 * card.chartData[index])
-                                    .animation(.spring(response: 0.5, dampingFraction: 0.6).delay(Double(index) * 0.05), value: showDetails)
-                            }
-                        }
-                        .frame(height: 140)
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            ShareHelper.shareMilestone(title: card.title, subtitle: "Vitalz Checkpoint", statValue: card.value)
-                        }) {
-                            HStack {
-                                Image(systemName: "square.and.arrow.up")
-                                Text("Share Milestone")
-                                    .font(.headline)
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 20)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.vitalzBlue)
-                            )
+            Text(card.subtitle)
+                .font(.system(size: 16, weight: .regular))
+                .foregroundColor(.gray)
+                .matchedGeometryEffect(id: "subtitle\(card.id)", in: animation)
+            
+            if showDetails {
+                VStack(spacing: 24) {
+                    Divider().background(Color.white.opacity(0.2)).padding(.vertical, 8)
+                    
+                    // Simple Animated Bar Chart
+                    HStack(alignment: .bottom, spacing: 12) {
+                        ForEach(0..<card.chartData.count, id: \.self) { index in
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.white.opacity(0.5))
+                                .frame(width: 20, height: 60 * card.chartData[index])
+                                .animation(.spring(response: 0.5, dampingFraction: 0.6).delay(Double(index) * 0.05), value: showDetails)
                         }
                     }
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    .frame(height: 70)
+                    .padding(.bottom, 8)
+                    
+                    Button(action: {
+                        ShareHelper.shareMilestone(title: card.title, subtitle: "Vitalz Checkpoint", statValue: card.value)
+                    }) {
+                        HStack {
+                            Image(systemName: "square.and.arrow.up")
+                            Text("Share Milestone")
+                                .font(.headline)
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.white.opacity(0.1))
+                        )
+                    }
                 }
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
             }
-            .padding(40)
-            
-            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(24)
         .background(
-            Color.vitalzCard
+            RoundedRectangle(cornerRadius: 32)
+                .fill(card.color.opacity(0.95))
                 .matchedGeometryEffect(id: "bg\(card.id)", in: animation)
+                .shadow(color: .black.opacity(0.5), radius: 30, x: 0, y: 20)
         )
-        .ignoresSafeArea()
         .onAppear {
             withAnimation(.easeOut(duration: 0.3).delay(0.2)) {
                 showDetails = true

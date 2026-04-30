@@ -9,6 +9,11 @@ public struct LifeStats {
     public let estimatedBreathsTaken: Int
     public let distanceTraveledSpaceKm: Int
     public let estimatedBlinks: Int
+    public let hairGrowthMeters: Double
+    public let fullMoonsWitnessed: Int
+    public let jupiterAge: Double
+    public let phoneVoidYears: Double
+    public let caffeineRiverLiters: Int
     public let percentageOf80YearLifeExpectancy: Double
 }
 
@@ -30,6 +35,12 @@ public struct LifeMath {
     private let breathsPerMinute = 16
     private let blinksPerMinuteAwake = 15
     private let earthOrbitSpeedKmPerSecond = 29.78
+    private let hairGrowthMetersPerDay = 0.00044 // 0.44 mm per day
+    private let daysPerFullMoon = 29.53
+    private let earthYearsPerJupiterYear = 11.86
+    private let averagePhoneHoursPerDay = 3.0
+    private let averageCoffeeLitersPerDay = 0.25
+    private let caffeineStartAgeYears = 15.0
     
     /// Initialize with a specific Date of Birth.
     public init(dateOfBirth: Date) {
@@ -70,6 +81,17 @@ public struct LifeMath {
         let awakeMinutesTotal = Double(totalDaysAlive) * awakeHoursPerDay * 60.0
         let estimatedBlinks = Int(awakeMinutesTotal * Double(blinksPerMinuteAwake))
         
+        let hairGrowthMeters = Double(totalDaysAlive) * hairGrowthMetersPerDay
+        let fullMoonsWitnessed = Int(Double(totalDaysAlive) / daysPerFullMoon)
+        
+        let ageInEarthYears = Double(totalDaysAlive) / 365.25
+        let jupiterAge = ageInEarthYears / earthYearsPerJupiterYear
+        
+        let phoneVoidYears = (Double(totalDaysAlive) * averagePhoneHoursPerDay) / 24.0 / 365.25
+        
+        let yearsDrinkingCoffee = max(0.0, ageInEarthYears - caffeineStartAgeYears)
+        let caffeineRiverLiters = Int(yearsDrinkingCoffee * 365.25 * averageCoffeeLitersPerDay)
+        
         return LifeStats(
             totalDaysAlive: totalDaysAlive,
             totalSecondsAlive: totalSecondsAlive,
@@ -78,6 +100,11 @@ public struct LifeMath {
             estimatedBreathsTaken: estimatedBreathsTaken,
             distanceTraveledSpaceKm: distanceTraveledSpaceKm,
             estimatedBlinks: estimatedBlinks,
+            hairGrowthMeters: hairGrowthMeters,
+            fullMoonsWitnessed: fullMoonsWitnessed,
+            jupiterAge: jupiterAge,
+            phoneVoidYears: phoneVoidYears,
+            caffeineRiverLiters: caffeineRiverLiters,
             percentageOf80YearLifeExpectancy: percentageOf80YearLifeExpectancy
         )
     }
