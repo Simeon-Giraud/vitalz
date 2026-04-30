@@ -12,6 +12,11 @@ public extension Color {
     static let vitalzText = Color(UIColor { traitCollection in
         return traitCollection.userInterfaceStyle == .dark ? .white : UIColor(hex: "#1A1A1A")
     })
+
+    /// Adaptive secondary text color for labels and supporting copy.
+    static let vitalzSecondaryText = Color(UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "#8E8E93") : UIColor(hex: "#6E6E73")
+    })
     
     /// Apple Blue (#007AFF) for key numbers and accents.
     static let vitalzBlue = Color(hex: "#007AFF")
@@ -26,6 +31,16 @@ public extension Color {
     /// Adaptive card color: Dark Grey in dark mode, Pure White in light mode.
     static let vitalzCard = Color(UIColor { traitCollection in
         return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "#1A1A1A") : .white
+    })
+
+    /// Adaptive elevated control color for buttons, segmented choices, and inset groups.
+    static let vitalzControl = Color(UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "#242426") : UIColor(hex: "#F0F1F3")
+    })
+
+    /// Adaptive divider color.
+    static let vitalzDivider = Color(UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? UIColor.white.withAlphaComponent(0.1) : UIColor.black.withAlphaComponent(0.08)
     })
     
     /// Adaptive shadow color for depth.

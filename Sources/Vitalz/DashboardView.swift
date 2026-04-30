@@ -1,13 +1,29 @@
 import SwiftUI
 
-struct CardData: Identifiable, Equatable {
-    let id = UUID()
+struct CardData: Identifiable {
+    enum ID: String, Hashable {
+        case secondsAlive
+        case heartbeats
+        case breathsTaken
+        case timesBlinked
+        case hairGrowth
+        case spaceTraveler
+        case fullMoons
+        case jupiterAge
+        case sleep
+        case phoneVoid
+        case caffeineRiver
+    }
+
+    let id: ID
     let title: String
     let value: String
     let subtitle: String
     let chartData: [CGFloat]
     let icon: String
     let color: Color
+    let accentColor: Color
+    let valueColor: Color
     var isFullWidth: Bool = false
 }
 
@@ -28,7 +44,7 @@ public struct DashboardView: View {
     @State private var showingSettings = false
     
     @Namespace private var animation
-    @State private var selectedCard: CardData? = nil
+    @State private var selectedCardID: CardData.ID? = nil
     
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
@@ -42,7 +58,7 @@ public struct DashboardView: View {
     
     public var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color.vitalzBackground.ignoresSafeArea()
             
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
@@ -51,11 +67,11 @@ public struct DashboardView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(userName)
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.gray)
+                                .foregroundColor(.vitalzSecondaryText)
                             
                             Text(Date(), style: .date)
                                 .font(.system(size: 20, weight: .bold))
-                                .foregroundColor(.white)
+                                .foregroundColor(.vitalzText)
                         }
                         
                         Spacer()
@@ -63,9 +79,9 @@ public struct DashboardView: View {
                         Button(action: { showingSettings = true }) {
                             Image(systemName: "gearshape")
                                 .font(.system(size: 20))
-                                .foregroundColor(.white)
+                                .foregroundColor(.vitalzText)
                                 .padding(12)
-                                .background(Color.white.opacity(0.1))
+                                .background(Color.vitalzControl)
                                 .clipShape(Circle())
                         }
                     }
@@ -74,31 +90,35 @@ public struct DashboardView: View {
                     
                     if let stats = stats {
                         let allCards = generateCards(from: stats)
-                        let topCard = showSecondsAlive ? allCards.first(where: { $0.title == "Seconds Alive" }) : nil
+                        let topCard = showSecondsAlive ? allCards.first(where: { $0.id == .secondsAlive }) : nil
                         
-                        var activeMiddleTitles: [String] = []
-                        if showHeartbeats { activeMiddleTitles.append("Heartbeats") }
-                        if showBreathsTaken { activeMiddleTitles.append("Breaths Taken") }
-                        if showTimesBlinked { activeMiddleTitles.append("Times Blinked") }
-                        if showHairGrowth { activeMiddleTitles.append("Hair Growth") }
-                        let middleCards = allCards.filter { activeMiddleTitles.contains($0.title) }
+                        var activeMiddleIDs: [CardData.ID] = []
+                        if showHeartbeats { activeMiddleIDs.append(.heartbeats) }
+                        if showBreathsTaken { activeMiddleIDs.append(.breathsTaken) }
+                        if showTimesBlinked { activeMiddleIDs.append(.timesBlinked) }
+                        if showHairGrowth { activeMiddleIDs.append(.hairGrowth) }
+                        let middleCards = allCards.filter { activeMiddleIDs.contains($0.id) }
                         
-                        var activeBottomTitles: [String] = ["Full Moons", "Jupiter Age", "Sleep", "Phone Void", "Caffeine River"]
-                        if showSpaceTraveler { activeBottomTitles.insert("Space Traveler", at: 0) }
-                        let bottomCards = allCards.filter { activeBottomTitles.contains($0.title) }
+                        var activeBottomIDs: [CardData.ID] = [.fullMoons, .jupiterAge, .sleep, .phoneVoid, .caffeineRiver]
+                        if showSpaceTraveler { activeBottomIDs.insert(.spaceTraveler, at: 0) }
+                        let bottomCards = allCards.filter { activeBottomIDs.contains($0.id) }
                         
                         let percentageLived = stats.percentageOf80YearLifeExpectancy
                         
                         VStack(spacing: 16) {
                             if let top = topCard {
-                                GridCardView(card: top, animation: animation, isSelected: selectedCard?.id == top.id)
-                                    .onTapGesture { selectCard(top) }
+                                Button(action: { selectCard(top) }) {
+                                    GridCardView(card: top, animation: animation, isSelected: selectedCardID == top.id)
+                                }
+                                .buttonStyle(.plain)
                             }
                             
                             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                                 ForEach(middleCards) { card in
-                                    GridCardView(card: card, animation: animation, isSelected: selectedCard?.id == card.id)
-                                        .onTapGesture { selectCard(card) }
+                                    Button(action: { selectCard(card) }) {
+                                        GridCardView(card: card, animation: animation, isSelected: selectedCardID == card.id)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                             
@@ -107,29 +127,29 @@ public struct DashboardView: View {
                                 HStack {
                                     Text("SPONSORED")
                                         .font(.system(size: 11, weight: .semibold))
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(.vitalzSecondaryText)
                                         .kerning(1.2)
                                     Spacer()
                                     Image(systemName: "arrow.up.right.square")
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(.vitalzSecondaryText)
                                 }
                                 
                                 Text("Your brand could be here")
                                     .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(.vitalzText)
                                 
                                 Text("Reach mindful users tracking their life stats")
                                     .font(.system(size: 15, weight: .regular))
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.vitalzSecondaryText)
                                 
                                 Spacer(minLength: 20)
                                 Text("ads@vitalz.app")
                                     .font(.system(size: 13))
-                                    .foregroundColor(.gray.opacity(0.6))
+                                    .foregroundColor(.vitalzSecondaryText.opacity(0.7))
                             }
                             .padding(24)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color(white: 0.12))
+                            .background(Color.vitalzCard)
                             .cornerRadius(24)
                             
                             // Life Loading Bar
@@ -137,16 +157,16 @@ public struct DashboardView: View {
                                 HStack {
                                     Text("Life Loading")
                                         .font(.system(size: 15))
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(.vitalzSecondaryText)
                                     Spacer()
                                     Image(systemName: "sun.max.fill")
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(.vitalzSecondaryText)
                                 }
                                 
                                 GeometryReader { geo in
                                     ZStack(alignment: .leading) {
                                         Capsule()
-                                            .fill(Color.white.opacity(0.1))
+                                            .fill(Color.vitalzControl)
                                             .frame(height: 12)
                                         
                                         Capsule()
@@ -159,21 +179,23 @@ public struct DashboardView: View {
                                 HStack {
                                     Text("Life Completed")
                                         .font(.system(size: 15))
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(.vitalzSecondaryText)
                                     Spacer()
                                     Text(String(format: "%.1f%%", percentageLived))
                                         .font(.system(size: 18, weight: .bold))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(.vitalzText)
                                 }
                             }
                             .padding(24)
-                            .background(Color(white: 0.12))
+                            .background(Color.vitalzCard)
                             .cornerRadius(24)
                             
                             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                                 ForEach(bottomCards) { card in
-                                    GridCardView(card: card, animation: animation, isSelected: selectedCard?.id == card.id)
-                                        .onTapGesture { selectCard(card) }
+                                    Button(action: { selectCard(card) }) {
+                                        GridCardView(card: card, animation: animation, isSelected: selectedCardID == card.id)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                         }
@@ -187,10 +209,11 @@ public struct DashboardView: View {
             }
             
             // Expanded Overlay
-            if let card = selectedCard {
+            if let selectedCardID,
+               let card = stats.map({ generateCards(from: $0) })?.first(where: { $0.id == selectedCardID }) {
                 Color.black.opacity(0.7)
                     .ignoresSafeArea()
-                    .onTapGesture { closeCard() }
+                    .onTapGesture(perform: closeCard)
                 
                 ExpandedCardView(card: card, animation: animation) {
                     closeCard()
@@ -212,13 +235,13 @@ public struct DashboardView: View {
     
     private func selectCard(_ card: CardData) {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-            selectedCard = card
+            selectedCardID = card.id
         }
     }
     
     private func closeCard() {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-            selectedCard = nil
+            selectedCardID = nil
         }
     }
     
@@ -254,17 +277,17 @@ public struct DashboardView: View {
         let blueColor = Color(red: 0.05, green: 0.1, blue: 0.2)
         
         return [
-            CardData(id: UUID(), title: "Seconds Alive", value: formatLargeNumber(stats.totalSecondsAlive), subtitle: "and counting...", chartData: ascendingData, icon: "stopwatch", color: yellowColor, isFullWidth: true),
-            CardData(id: UUID(), title: "Heartbeats", value: formatMillions(stats.estimatedTotalHeartbeats), subtitle: "@ 70 bpm", chartData: ascendingData, icon: "heart", color: redColor),
-            CardData(id: UUID(), title: "Breaths Taken", value: formatMillions(stats.estimatedBreathsTaken), subtitle: "@ 16/min", chartData: ascendingData, icon: "wind", color: redColor),
-            CardData(id: UUID(), title: "Times Blinked", value: formatMillions(stats.estimatedBlinks), subtitle: "while awake", chartData: ascendingData, icon: "eye", color: redColor),
-            CardData(id: UUID(), title: "Hair Growth", value: formatDouble(stats.hairGrowthMeters) + "m", subtitle: "of hair grown", chartData: ascendingData, icon: "scissors", color: redColor),
-            CardData(id: UUID(), title: "Space Traveler", value: formatBillions(stats.distanceTraveledSpaceKm), subtitle: "km around Sun", chartData: ascendingData, icon: "location.north.fill", color: purpleColor),
-            CardData(id: UUID(), title: "Full Moons", value: formatLargeNumber(stats.fullMoonsWitnessed), subtitle: "witnessed", chartData: ascendingData, icon: "moon", color: purpleColor),
-            CardData(id: UUID(), title: "Jupiter Age", value: formatDouble(stats.jupiterAge, decimals: 2), subtitle: "years on Jupiter", chartData: ascendingData, icon: "globe", color: purpleColor),
-            CardData(id: UUID(), title: "Sleep", value: formatDouble(stats.estimatedHoursSlept / 24.0 / 365.25) + " yrs", subtitle: "spent dreaming", chartData: ascendingData, icon: "moon.zzz", color: blueColor),
-            CardData(id: UUID(), title: "Phone Void", value: formatDouble(stats.phoneVoidYears) + " yrs", subtitle: "lost to screens", chartData: ascendingData, icon: "iphone", color: blueColor),
-            CardData(id: UUID(), title: "Caffeine River", value: formatLargeNumber(stats.caffeineRiverLiters) + "L", subtitle: "of coffee", chartData: ascendingData, icon: "cup.and.saucer", color: redColor)
+            CardData(id: .secondsAlive, title: "Seconds Alive", value: formatLargeNumber(stats.totalSecondsAlive), subtitle: "and counting...", chartData: ascendingData, icon: "stopwatch", color: yellowColor, accentColor: .yellow, valueColor: .yellow, isFullWidth: true),
+            CardData(id: .heartbeats, title: "Heartbeats", value: formatMillions(stats.estimatedTotalHeartbeats), subtitle: "@ 70 bpm", chartData: ascendingData, icon: "heart", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)),
+            CardData(id: .breathsTaken, title: "Breaths Taken", value: formatMillions(stats.estimatedBreathsTaken), subtitle: "@ 16/min", chartData: ascendingData, icon: "wind", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)),
+            CardData(id: .timesBlinked, title: "Times Blinked", value: formatMillions(stats.estimatedBlinks), subtitle: "while awake", chartData: ascendingData, icon: "eye", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)),
+            CardData(id: .hairGrowth, title: "Hair Growth", value: formatDouble(stats.hairGrowthMeters) + "m", subtitle: "of hair grown", chartData: ascendingData, icon: "scissors", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)),
+            CardData(id: .spaceTraveler, title: "Space Traveler", value: formatBillions(stats.distanceTraveledSpaceKm), subtitle: "km around Sun", chartData: ascendingData, icon: "location.north.fill", color: purpleColor, accentColor: .blue, valueColor: .white),
+            CardData(id: .fullMoons, title: "Full Moons", value: formatLargeNumber(stats.fullMoonsWitnessed), subtitle: "witnessed", chartData: ascendingData, icon: "moon", color: purpleColor, accentColor: .blue, valueColor: .white),
+            CardData(id: .jupiterAge, title: "Jupiter Age", value: formatDouble(stats.jupiterAge, decimals: 2), subtitle: "years on Jupiter", chartData: ascendingData, icon: "globe", color: purpleColor, accentColor: .blue, valueColor: .white),
+            CardData(id: .sleep, title: "Sleep", value: formatDouble(stats.estimatedHoursSlept / 24.0 / 365.25) + " yrs", subtitle: "spent dreaming", chartData: ascendingData, icon: "moon.zzz", color: blueColor, accentColor: .blue, valueColor: .white),
+            CardData(id: .phoneVoid, title: "Phone Void", value: formatDouble(stats.phoneVoidYears) + " yrs", subtitle: "lost to screens", chartData: ascendingData, icon: "iphone", color: blueColor, accentColor: .blue, valueColor: .white),
+            CardData(id: .caffeineRiver, title: "Caffeine River", value: formatLargeNumber(stats.caffeineRiverLiters) + "L", subtitle: "of coffee", chartData: ascendingData, icon: "cup.and.saucer", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6))
         ]
     }
 }
@@ -275,6 +298,8 @@ struct GridCardView: View {
     let card: CardData
     var animation: Namespace.ID
     var isSelected: Bool
+
+    private let supportingTextColor = Color.white.opacity(0.65)
     
     var body: some View {
         ZStack {
@@ -286,11 +311,11 @@ struct GridCardView: View {
                     HStack {
                         Text(card.title)
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.gray)
+                            .foregroundColor(supportingTextColor)
                             .matchedGeometryEffect(id: "title\(card.id)", in: animation)
                         Spacer()
                         Image(systemName: card.icon)
-                            .foregroundColor(card.color == Color(red: 0.2, green: 0.15, blue: 0.05) ? .yellow : (card.color == Color(red: 0.2, green: 0.05, blue: 0.08) ? .red : .blue))
+                            .foregroundColor(card.accentColor)
                             .opacity(0.8)
                             .matchedGeometryEffect(id: "icon\(card.id)", in: animation)
                     }
@@ -299,14 +324,14 @@ struct GridCardView: View {
                     
                     Text(card.value)
                         .font(.system(size: card.isFullWidth ? 36 : 28, weight: .bold))
-                        .foregroundColor(card.color == Color(red: 0.2, green: 0.15, blue: 0.05) ? .yellow : (card.color == Color(red: 0.2, green: 0.05, blue: 0.08) ? Color(red: 1.0, green: 0.6, blue: 0.6) : .white))
+                        .foregroundColor(card.valueColor)
                         .minimumScaleFactor(0.5)
                         .lineLimit(1)
                         .matchedGeometryEffect(id: "value\(card.id)", in: animation)
                     
                     Text(card.subtitle)
                         .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(.gray)
+                        .foregroundColor(supportingTextColor)
                         .matchedGeometryEffect(id: "subtitle\(card.id)", in: animation)
                 }
                 .padding(20)
@@ -328,38 +353,40 @@ struct ExpandedCardView: View {
     var onClose: () -> Void
     
     @State private var showDetails = false
+
+    private let supportingTextColor = Color.white.opacity(0.65)
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
                 Text(card.title)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.gray)
+                    .foregroundColor(supportingTextColor)
                     .matchedGeometryEffect(id: "title\(card.id)", in: animation)
                 Spacer()
                 Image(systemName: card.icon)
-                    .foregroundColor(.white)
+                    .foregroundColor(card.accentColor)
                     .opacity(0.8)
                     .matchedGeometryEffect(id: "icon\(card.id)", in: animation)
                 
                 Button(action: onClose) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.title2)
-                        .foregroundColor(.gray)
+                        .foregroundColor(supportingTextColor)
                 }
                 .padding(.leading, 8)
             }
             
             Text(card.value)
                 .font(.system(size: 48, weight: .bold))
-                .foregroundColor(card.color == Color(red: 0.2, green: 0.15, blue: 0.05) ? .yellow : .white)
+                .foregroundColor(card.valueColor)
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
                 .matchedGeometryEffect(id: "value\(card.id)", in: animation)
             
             Text(card.subtitle)
                 .font(.system(size: 16, weight: .regular))
-                .foregroundColor(.gray)
+                .foregroundColor(supportingTextColor)
                 .matchedGeometryEffect(id: "subtitle\(card.id)", in: animation)
             
             if showDetails {
@@ -420,4 +447,3 @@ struct ExpandedCardView: View {
 #Preview {
     DashboardView()
 }
-
