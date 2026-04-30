@@ -90,19 +90,9 @@ public struct DashboardView: View {
                     
                     if let stats = stats {
                         let allCards = generateCards(from: stats)
-                        let topCard = showSecondsAlive ? allCards.first(where: { $0.id == .secondsAlive }) : nil
-                        
-                        var activeMiddleIDs: [CardData.ID] = []
-                        if showHeartbeats { activeMiddleIDs.append(.heartbeats) }
-                        if showBreathsTaken { activeMiddleIDs.append(.breathsTaken) }
-                        if showTimesBlinked { activeMiddleIDs.append(.timesBlinked) }
-                        if showHairGrowth { activeMiddleIDs.append(.hairGrowth) }
-                        let middleCards = allCards.filter { activeMiddleIDs.contains($0.id) }
-                        
-                        var activeBottomIDs: [CardData.ID] = [.fullMoons, .jupiterAge, .sleep, .phoneVoid, .caffeineRiver]
-                        if showSpaceTraveler { activeBottomIDs.insert(.spaceTraveler, at: 0) }
-                        let bottomCards = allCards.filter { activeBottomIDs.contains($0.id) }
-                        
+                        let topCard = visibleTopCard(from: allCards)
+                        let middleCards = visibleCards(matching: activeMiddleCardIDs, from: allCards)
+                        let bottomCards = visibleCards(matching: activeBottomCardIDs, from: allCards)
                         let percentageLived = stats.percentageOf80YearLifeExpectancy
                         
                         VStack(spacing: 16) {
@@ -233,6 +223,29 @@ public struct DashboardView: View {
         }
     }
     
+    private var activeMiddleCardIDs: [CardData.ID] {
+        [
+            showHeartbeats ? .heartbeats : nil,
+            showBreathsTaken ? .breathsTaken : nil,
+            showTimesBlinked ? .timesBlinked : nil,
+            showHairGrowth ? .hairGrowth : nil
+        ].compactMap { $0 }
+    }
+
+    private var activeBottomCardIDs: [CardData.ID] {
+        let defaultIDs: [CardData.ID] = [.fullMoons, .jupiterAge, .sleep, .phoneVoid, .caffeineRiver]
+        return showSpaceTraveler ? [.spaceTraveler] + defaultIDs : defaultIDs
+    }
+
+    private func visibleTopCard(from cards: [CardData]) -> CardData? {
+        guard showSecondsAlive else { return nil }
+        return cards.first { $0.id == .secondsAlive }
+    }
+
+    private func visibleCards(matching ids: [CardData.ID], from cards: [CardData]) -> [CardData] {
+        cards.filter { ids.contains($0.id) }
+    }
+
     private func selectCard(_ card: CardData) {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
             selectedCardID = card.id
