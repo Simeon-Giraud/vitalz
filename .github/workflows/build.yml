@@ -1,4 +1,4 @@
-name: Build for Appetize
+name: getting ready for appetize.io
 
 on:
   push:
@@ -20,9 +20,16 @@ jobs:
         with:
           xcode-version: '15.4'
 
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Project
+        run: xcodegen generate
+
       - name: Build for Simulator
         run: |
           xcodebuild build \
+            -project Vitalz.xcodeproj \
             -scheme Vitalz \
             -sdk iphonesimulator \
             -destination 'platform=iOS Simulator,name=iPhone 15' \
