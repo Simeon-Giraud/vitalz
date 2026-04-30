@@ -5,7 +5,7 @@ targets:
   Vitalz:
     type: application
     platform: iOS
-    deploymentTarget: "15.0"
+    deploymentTarget: "26.0"
     sources:
       - path: Sources/Vitalz
     settings:
