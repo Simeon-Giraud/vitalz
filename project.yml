@@ -9,8 +9,18 @@ targets:
     sources:
       - path: Sources/Vitalz
     settings:
-      INFOPLIST_FILE: Sources/Vitalz/Info.plist
-      PRODUCT_BUNDLE_IDENTIFIER: com.simeon.vitalz
-      MARKETING_VERSION: 1.0.0
-      CURRENT_PROJECT_VERSION: 1
-      CODE_SIGNING_ALLOWED: NO
+      base:
+        INFOPLIST_FILE: Sources/Vitalz/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.simeon.vitalz
+        MARKETING_VERSION: 1.0.0
+        CURRENT_PROJECT_VERSION: 1
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGNING_IDENTITY: ""
+        AD_HOC_CODE_SIGNING_ALLOWED: YES
+schemes:
+  Vitalz:
+    build:
+      targets:
+        Vitalz: [run, test, profile, analyze]
+

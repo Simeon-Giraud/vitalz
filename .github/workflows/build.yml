@@ -34,7 +34,16 @@ jobs:
             -sdk iphonesimulator \
             -destination 'platform=iOS Simulator,name=iPhone 15' \
             -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_IDENTITY="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
+
+      - name: Debug Build Output
+        if: failure()
+        run: |
+          ls -R build || echo "Build directory not found"
+          find . -name "*.app"
 
       - name: Zip for Appetize
         run: |
