@@ -25,8 +25,8 @@ public struct MilestonesView: View {
                     // Header
                     HStack {
                         Text("VITAL MILESTONES")
-                            .font(.system(size: 14, weight: .bold, design: .serif))
-                            .foregroundColor(.vitalzGold)
+                            .font(.system(size: 14, weight: .bold, design: .default))
+                            .foregroundColor(.vitalzBlue)
                             .kerning(6)
                         Spacer()
                         
@@ -40,7 +40,7 @@ public struct MilestonesView: View {
                                 Text(notificationManager.hasPermission ? "Active" : "Alert Me")
                                     .font(.system(size: 12, weight: .bold))
                             }
-                            .foregroundColor(notificationManager.hasPermission ? .vitalzGold : .gray)
+                            .foregroundColor(notificationManager.hasPermission ? .vitalzBlue : .gray)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(Color.vitalzCard)
@@ -148,7 +148,7 @@ struct DynamicMilestoneCard: View {
                 Image(systemName: iconSystemName)
                     .font(.system(size: 20, weight: .light))
                     // Dimmed if the event already happened
-                    .foregroundColor(isFuture ? .vitalzGold : .gray.opacity(0.5))
+                    .foregroundColor(isFuture ? .vitalzBlue : .gray.opacity(0.5))
             }
             .shadow(color: .vitalzShadow.opacity(0.5), radius: 5, x: 0, y: 3)
             
@@ -202,16 +202,16 @@ struct DynamicMessageView: View {
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.gray)
                 + Text("\(days)")
-                    // Gold highlight for the countdown digits
-                    .font(.system(size: 16, weight: .bold, design: .serif))
-                    .foregroundColor(.vitalzGold)
+                    // Blue highlight for the countdown digits
+                    .font(.system(size: 16, weight: .bold, design: .default))
+                    .foregroundColor(.vitalzBlue)
                 + Text(" days you hit your \(target)")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.gray)
             } else {
                 Text("Happening within 24 hours!")
-                    .font(.system(size: 13, weight: .bold, design: .serif))
-                    .foregroundColor(.vitalzGold)
+                    .font(.system(size: 13, weight: .bold, design: .default))
+                    .foregroundColor(.vitalzBlue)
             }
         } else {
             // Past Milestone Calculation

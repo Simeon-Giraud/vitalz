@@ -23,8 +23,8 @@ public struct ShareCardView: View {
                 // Top Branding Area
                 HStack {
                     Text("V I T A L Z")
-                        .font(.system(size: 48, weight: .bold, design: .serif))
-                        .foregroundColor(.vitalzGold)
+                        .font(.system(size: 48, weight: .bold, design: .default))
+                        .foregroundColor(.vitalzBlue)
                         .kerning(16)
                 }
                 .padding(.top, 160)
@@ -39,15 +39,15 @@ public struct ShareCardView: View {
                         .kerning(4)
                     
                     Text(statValue)
-                        .font(.system(size: 200, weight: .bold, design: .serif))
-                        .foregroundColor(.vitalzGold)
+                        .font(.system(size: 200, weight: .bold, design: .default))
+                        .foregroundColor(.vitalzBlue)
                         .minimumScaleFactor(0.5)
                         .lineLimit(1)
-                        .shadow(color: Color.vitalzGold.opacity(0.3), radius: 30, x: 0, y: 15)
+                        .shadow(color: Color.vitalzBlue.opacity(0.3), radius: 30, x: 0, y: 15)
                         .padding(.horizontal, 40)
                     
                     Text(milestoneTitle)
-                        .font(.system(size: 56, weight: .medium, design: .serif))
+                        .font(.system(size: 56, weight: .medium, design: .default))
                         .foregroundColor(.vitalzText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 80)
@@ -58,7 +58,7 @@ public struct ShareCardView: View {
                 // Bottom Footer
                 VStack(spacing: 16) {
                     Text("Every second deserves to be noticed.")
-                        .font(.system(size: 36, weight: .light, design: .serif))
+                        .font(.system(size: 36, weight: .light, design: .default))
                         .foregroundColor(.gray)
                         .italic()
                 }

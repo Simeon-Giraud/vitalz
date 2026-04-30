@@ -28,7 +28,7 @@ public struct MainTabView: View {
                     Text("Settings")
                 }
         }
-        .accentColor(.vitalzGold)
+        .accentColor(.vitalzBlue)
         // Global configuration to force TabBar to match our pure black luxury aesthetic
         .onAppear {
             let appearance = UITabBarAppearance()

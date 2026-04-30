@@ -20,12 +20,12 @@ public struct DashboardView: View {
     
     public var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: 50) { // Large negative space for premium breathing room
+            VStack(spacing: 50) { 
                 
                 // Minimal Header
                 Text("V I T A L Z")
-                    .font(.system(size: 14, weight: .bold, design: .serif))
-                    .foregroundColor(.vitalzGold)
+                    .font(.system(size: 14, weight: .bold, design: .default))
+                    .foregroundColor(.vitalzBlue)
                     .kerning(8)
                     .padding(.top, 24)
                 
@@ -37,30 +37,32 @@ public struct DashboardView: View {
                     CircularProgressArc(percentage: percentageLived)
                         .frame(height: 320)
                     
-                    // Celebratory Premium Cards
+                    // Expandable Premium Cards
                     VStack(spacing: 32) {
-                        PremiumStatCard(
+                        ExpandableStatCard(
                             title: "Total Days Alive",
                             value: formatLargeNumber(stats.totalDaysAlive),
-                            subtitle: "Every sunrise is a privilege."
+                            subtitle: "Every sunrise is a privilege.",
+                            chartData: generateChartData()
                         )
                         
-                        PremiumStatCard(
+                        ExpandableStatCard(
                             title: "Total Heartbeats",
                             value: formatLargeNumber(stats.estimatedTotalHeartbeats),
-                            subtitle: "The rhythm of your existence."
+                            subtitle: "The rhythm of your existence.",
+                            chartData: generateChartData()
                         )
                         
-                        PremiumStatCard(
+                        ExpandableStatCard(
                             title: "Remaining Summers",
                             value: String(format: "%.1f%%", percentageSummersAhead),
-                            subtitle: "Make every season unforgettable."
+                            subtitle: "Make every season unforgettable.",
+                            chartData: generateChartData()
                         )
                     }
                     .padding(.horizontal, 24)
                     .padding(.bottom, 60)
                 } else {
-                    // Placeholder while loading or when stats are unavailable
                     Color.clear.frame(height: 400)
                 }
             }
@@ -87,44 +89,95 @@ public struct DashboardView: View {
     private func formatLargeNumber(_ number: Int) -> String {
         return Self.numberFormatter.string(from: NSNumber(value: number)) ?? "\(number)"
     }
+    
+    private func generateChartData() -> [CGFloat] {
+        return (0..<7).map { _ in CGFloat.random(in: 0.3...1.0) }
+    }
 }
 
 // MARK: - Subcomponents
 
-/// A large, luxuriously spaced card representing a singular statistic
-struct PremiumStatCard: View {
+struct ExpandableStatCard: View {
     let title: String
     let value: String
     let subtitle: String
+    let chartData: [CGFloat]
+    
+    @State private var isExpanded: Bool = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text(title.uppercased())
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.gray)
-                .kerning(1.5)
-            
-            Text(value)
-                // Distinctive large number display independent from the HeroStats modifier if needed,
-                // but matching the aesthetic
-                .font(.system(size: 42, weight: .medium, design: .serif))
-                .foregroundColor(.vitalzGold)
-                .shadow(color: Color.vitalzGold.opacity(0.15), radius: 8, x: 0, y: 3)
+            HStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(title.uppercased())
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.gray)
+                        .kerning(1.5)
+                    
+                    Text(value)
+                        .font(.system(size: 42, weight: .bold, design: .default))
+                        .foregroundStyle(Color.vitalzGradient)
+                        .shadow(color: Color.vitalzBlue.opacity(0.15), radius: 8, x: 0, y: 3)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                    .foregroundColor(.gray)
+            }
             
             Text(subtitle)
-                .font(.system(size: 15, weight: .light, design: .serif))
+                .font(.system(size: 15, weight: .light, design: .default))
                 .foregroundColor(.vitalzText.opacity(0.7))
-                .italic()
+            
+            if isExpanded {
+                VStack(spacing: 24) {
+                    Divider().padding(.vertical, 8)
+                    
+                    // Simple Animated Bar Chart
+                    HStack(alignment: .bottom, spacing: 12) {
+                        ForEach(0..<chartData.count, id: \.self) { index in
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.vitalzGradient)
+                                .frame(width: 20, height: 60 * chartData[index])
+                                .animation(.spring(response: 0.5, dampingFraction: 0.6).delay(Double(index) * 0.05), value: isExpanded)
+                        }
+                    }
+                    .frame(height: 70)
+                    .padding(.bottom, 8)
+                    
+                    Button(action: {
+                        ShareHelper.shareMilestone(title: title, subtitle: "Vitalz Checkpoint", statValue: value)
+                    }) {
+                        HStack {
+                            Image(systemName: "square.and.arrow.up")
+                            Text("Share Milestone")
+                                .font(.headline)
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.vitalzBlue)
+                        )
+                    }
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
-        .padding(36) // Extensive padding for an airy, museum-like layout
+        .padding(36)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.vitalzCard)
-        .cornerRadius(24) // Soft, grand rounding
+        .cornerRadius(24)
         .shadow(color: .vitalzShadow, radius: 20, x: 0, y: 15)
+        .onTapGesture {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                isExpanded.toggle()
+            }
+        }
     }
 }
 
-/// The beautifully animated core visual element
 struct CircularProgressArc: View {
     let percentage: Double
     @State private var animatedEndTrim: CGFloat = 0.0
@@ -139,38 +192,27 @@ struct CircularProgressArc: View {
             Circle()
                 .trim(from: 0, to: animatedEndTrim)
                 .stroke(
-                    AngularGradient(
-                        gradient: Gradient(colors: [.vitalzCard, .vitalzGold]),
-                        center: .center,
-                        startAngle: .degrees(-90),
-                        endAngle: .degrees(270)
-                    ),
+                    Color.vitalzGradient,
                     style: StrokeStyle(lineWidth: 10, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
-                // Glow effect mimicking a polished complication
-                .shadow(color: .vitalzGold.opacity(0.35), radius: 15, x: 0, y: 0)
+                .shadow(color: Color.vitalzBlue.opacity(0.35), radius: 15, x: 0, y: 0)
             
             // Center content
             VStack(spacing: 8) {
-                // If it hits exactly an integer, drop the decimal, else show up to 1 decimal place
                 Text(String(format: percentage.truncatingRemainder(dividingBy: 1) == 0 ? "%.0f%%" : "%.1f%%", percentage))
                     .heroStatsStyle()
-                    // If your Xcode complains about numeric text in SwiftUI < iOS 16, you can safely remove `.contentTransition`
                     .contentTransition(.numericText())
                 
                 Text("EXPLORED")
-                    .font(.system(size: 11, weight: .bold, design: .serif))
+                    .font(.system(size: 11, weight: .bold, design: .default))
                     .foregroundColor(.gray)
                     .kerning(4)
             }
         }
         .padding(40)
         .onAppear {
-            // Ensure the percentage is constrained between 0 and 1
             let targetTrim = CGFloat(min(percentage / 100.0, 1.0))
-            
-            // Long, premium sweeping animation
             withAnimation(.easeInOut(duration: 2.2).delay(0.3)) {
                 animatedEndTrim = targetTrim
             }
@@ -181,3 +223,4 @@ struct CircularProgressArc: View {
 #Preview {
     DashboardView()
 }
+

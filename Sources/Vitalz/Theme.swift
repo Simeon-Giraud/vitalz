@@ -13,8 +13,15 @@ public extension Color {
         return traitCollection.userInterfaceStyle == .dark ? .white : UIColor(hex: "#1A1A1A")
     })
     
-    /// Warm Gold (#C9A84C) for key numbers and accents. Remains constant for brand identity.
-    static let vitalzGold = Color(hex: "#C9A84C")
+    /// Apple Blue (#007AFF) for key numbers and accents.
+    static let vitalzBlue = Color(hex: "#007AFF")
+    
+    /// Apple Health style gradient for dynamic data visualization.
+    static let vitalzGradient = LinearGradient(
+        gradient: Gradient(colors: [Color(hex: "#42A5F5"), Color(hex: "#007AFF")]),
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
     
     /// Adaptive card color: Dark Grey in dark mode, Pure White in light mode.
     static let vitalzCard = Color(UIColor { traitCollection in
@@ -63,13 +70,13 @@ public extension UIColor {
 public struct HeroStatsModifier: ViewModifier {
     public func body(content: Content) -> some View {
         content
-            // Using a serif design for an elegant, engraved watch-dial appearance
-            .font(.system(size: 56, weight: .bold, design: .serif))
-            // Applying the Warm Gold accent color
-            .foregroundColor(.vitalzGold)
-            // Adding a subtle glow/shadow to emulate the reflection on polished metal
-            .shadow(color: Color.vitalzGold.opacity(0.35), radius: 8, x: 0, y: 4)
-            // Slight letter spacing for a deliberate, premium layout
+            // Using a serif design for an elegant appearance
+            .font(.system(size: 56, weight: .bold, design: .default))
+            // Applying the Apple Blue accent color
+            .foregroundColor(.vitalzBlue)
+            // Adding a subtle glow/shadow
+            .shadow(color: Color.vitalzBlue.opacity(0.35), radius: 8, x: 0, y: 4)
+            // Slight letter spacing
             .kerning(1.5)
     }
 }
