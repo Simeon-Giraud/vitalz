@@ -3,20 +3,37 @@ import SwiftUI
 // MARK: - Color Palette
 
 public extension Color {
-    /// Pure Black (#000000) for the main background.
-    static let vitalzBackground = Color(hex: "#000000")
+    /// Adaptive background color: Pure Black in dark mode, Off-White in light mode.
+    static let vitalzBackground = Color(UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "#000000") : UIColor(hex: "#FAFAFA")
+    })
     
-    /// White for the primary text.
-    static let vitalzText = Color.white
+    /// Adaptive text color: White in dark mode, Dark Charcoal in light mode.
+    static let vitalzText = Color(UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? .white : UIColor(hex: "#1A1A1A")
+    })
     
-    /// Warm Gold (#C9A84C) for key numbers and accents.
+    /// Warm Gold (#C9A84C) for key numbers and accents. Remains constant for brand identity.
     static let vitalzGold = Color(hex: "#C9A84C")
     
-    /// Dark Grey (#1A1A1A) for cards and secondary elevated surfaces.
-    static let vitalzCard = Color(hex: "#1A1A1A")
+    /// Adaptive card color: Dark Grey in dark mode, Pure White in light mode.
+    static let vitalzCard = Color(UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "#1A1A1A") : .white
+    })
+    
+    /// Adaptive shadow color for depth.
+    static let vitalzShadow = Color(UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? UIColor.black.withAlphaComponent(0.8) : UIColor.black.withAlphaComponent(0.1)
+    })
     
     /// Internal helper allowing for easy Hex-based Color initialization.
     init(hex: String) {
+        self.init(UIColor(hex: hex))
+    }
+}
+
+public extension UIColor {
+    convenience init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
         Scanner(string: hex).scanHexInt64(&int)
@@ -32,11 +49,10 @@ public extension Color {
             (a, r, g, b) = (255, 0, 0, 0)
         }
         self.init(
-            .sRGB,
-            red: Double(r) / 255.0,
-            green: Double(g) / 255.0,
-            blue: Double(b) / 255.0,
-            opacity: Double(a) / 255.0
+            red: CGFloat(r) / 255,
+            green: CGFloat(g) / 255,
+            blue: CGFloat(b) / 255,
+            alpha: CGFloat(a) / 255
         )
     }
 }

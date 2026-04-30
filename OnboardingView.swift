@@ -45,7 +45,6 @@ public struct OnboardingView: View {
                         )
                         .datePickerStyle(.compact)
                         .labelsHidden()
-                        .environment(\.colorScheme, .dark)
                         .padding()
                         .frame(maxWidth: .infinity)
                         .background(Color.vitalzCard)
@@ -58,7 +57,7 @@ public struct OnboardingView: View {
                         Text("Begin")
                             .font(.system(size: 20, weight: .semibold, design: .serif))
                             // Dark text on gold background
-                            .foregroundColor(.vitalzBackground)
+                            .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 18)
                             .background(Color.vitalzGold)
@@ -72,7 +71,6 @@ public struct OnboardingView: View {
             }
         }
         // Ensuring the DatePicker's pop-up calendar respects the app's aesthetic
-        .preferredColorScheme(.dark)
         .tint(.vitalzGold)
     }
     

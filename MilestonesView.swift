@@ -150,7 +150,7 @@ struct DynamicMilestoneCard: View {
                     // Dimmed if the event already happened
                     .foregroundColor(isFuture ? .vitalzGold : .gray.opacity(0.5))
             }
-            .shadow(color: Color.black.opacity(0.5), radius: 5, x: 0, y: 3)
+            .shadow(color: .vitalzShadow.opacity(0.5), radius: 5, x: 0, y: 3)
             
             // Text Content
             VStack(alignment: .leading, spacing: 10) {
@@ -174,11 +174,11 @@ struct DynamicMilestoneCard: View {
         .padding(24)
         .background(Color.vitalzCard)
         .cornerRadius(24)
-        .shadow(color: Color.black.opacity(0.6), radius: 15, x: 0, y: 10)
+        .shadow(color: .vitalzShadow, radius: 15, x: 0, y: 10)
         // Wash out border style if event passed
         .overlay(
             RoundedRectangle(cornerRadius: 24)
-                .stroke(isFuture ? Color.clear : Color.white.opacity(0.02), lineWidth: 1)
+                .stroke(isFuture ? Color.clear : Color.vitalzText.opacity(0.05), lineWidth: 1)
         )
     }
 }

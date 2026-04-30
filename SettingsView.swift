@@ -3,6 +3,7 @@ import SwiftUI
 public struct SettingsView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     @AppStorage("userDOBTimestamp") private var userDOBTimestamp: Double = 0
+    @AppStorage("appTheme") private var appTheme: Int = 0
     @State private var showResetConfirmation = false
     
     public init() {}
@@ -58,6 +59,20 @@ public struct SettingsView: View {
                             .kerning(1.5)
                             .padding(.horizontal, 24)
                         
+                        // Theme Picker
+                        VStack(spacing: 0) {
+                            Picker("App Theme", selection: $appTheme) {
+                                Text("System").tag(0)
+                                Text("Light").tag(1)
+                                Text("Dark").tag(2)
+                            }
+                            .pickerStyle(.segmented)
+                            .padding(24)
+                        }
+                        .background(Color.vitalzCard)
+                        .cornerRadius(24)
+                        .padding(.horizontal, 24)
+                        
                         Button(action: {
                             showResetConfirmation = true
                         }) {
@@ -107,11 +122,15 @@ public struct SettingsView: View {
         }
     }
     
-    private func formatDetailedDate(_ date: Date) -> String {
+    private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .long
         formatter.timeStyle = .none
-        return formatter.string(from: date)
+        return formatter
+    }()
+    
+    private func formatDetailedDate(_ date: Date) -> String {
+        return Self.dateFormatter.string(from: date)
     }
 }
 

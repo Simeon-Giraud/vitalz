@@ -5,19 +5,20 @@ public struct DashboardView: View {
     
     // Updates live metrics
     @State private var currentDate = Date()
+    @State private var stats: LifeStats? = nil
+    
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    
+    // Cache the formatter so it is not allocated on every render
+    private static let numberFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        return f
+    }()
     
     public init() {}
     
     public var body: some View {
-        // Derive state
-        let dob = Date(timeIntervalSince1970: userDOBTimestamp)
-        let math = LifeMath(dateOfBirth: dob)
-        let stats = math.calculateStats(upTo: currentDate)
-        
-        let percentageLived = stats.percentageOf80YearLifeExpectancy
-        let percentageSummersAhead = max(0.0, 100.0 - percentageLived)
-        
         ScrollView(showsIndicators: false) {
             VStack(spacing: 50) { // Large negative space for premium breathing room
                 
@@ -28,44 +29,63 @@ public struct DashboardView: View {
                     .kerning(8)
                     .padding(.top, 24)
                 
-                // Animated Hero Element
-                CircularProgressArc(percentage: percentageLived)
-                    .frame(height: 320)
-                
-                // Celebratory Premium Cards
-                VStack(spacing: 32) {
-                    PremiumStatCard(
-                        title: "Total Days Alive",
-                        value: formatLargeNumber(stats.totalDaysAlive),
-                        subtitle: "Every sunrise is a privilege."
-                    )
+                if let stats = stats {
+                    let percentageLived = stats.percentageOf80YearLifeExpectancy
+                    let percentageSummersAhead = max(0.0, 100.0 - percentageLived)
                     
-                    PremiumStatCard(
-                        title: "Total Heartbeats",
-                        value: formatLargeNumber(stats.estimatedTotalHeartbeats),
-                        subtitle: "The rhythm of your existence."
-                    )
+                    // Animated Hero Element
+                    CircularProgressArc(percentage: percentageLived)
+                        .frame(height: 320)
                     
-                    PremiumStatCard(
-                        title: "Remaining Summers",
-                        value: String(format: "%.1f%%", percentageSummersAhead),
-                        subtitle: "Make every season unforgettable."
-                    )
+                    // Celebratory Premium Cards
+                    VStack(spacing: 32) {
+                        PremiumStatCard(
+                            title: "Total Days Alive",
+                            value: formatLargeNumber(stats.totalDaysAlive),
+                            subtitle: "Every sunrise is a privilege."
+                        )
+                        
+                        PremiumStatCard(
+                            title: "Total Heartbeats",
+                            value: formatLargeNumber(stats.estimatedTotalHeartbeats),
+                            subtitle: "The rhythm of your existence."
+                        )
+                        
+                        PremiumStatCard(
+                            title: "Remaining Summers",
+                            value: String(format: "%.1f%%", percentageSummersAhead),
+                            subtitle: "Make every season unforgettable."
+                        )
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 60)
+                } else {
+                    // Placeholder while loading or when stats are unavailable
+                    Color.clear.frame(height: 400)
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 60)
             }
         }
         .background(Color.vitalzBackground.ignoresSafeArea())
+        .onAppear {
+            updateStats(for: currentDate)
+        }
+        .onChange(of: userDOBTimestamp) { _ in
+            updateStats(for: currentDate)
+        }
         .onReceive(timer) { input in
             currentDate = input
+            updateStats(for: input)
         }
     }
     
+    private func updateStats(for date: Date) {
+        let dob = Date(timeIntervalSince1970: userDOBTimestamp)
+        let math = LifeMath(dateOfBirth: dob)
+        self.stats = math.calculateStats(upTo: date)
+    }
+    
     private func formatLargeNumber(_ number: Int) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
+        return Self.numberFormatter.string(from: NSNumber(value: number)) ?? "\(number)"
     }
 }
 
@@ -100,8 +120,7 @@ struct PremiumStatCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.vitalzCard)
         .cornerRadius(24) // Soft, grand rounding
-        // Ambient darkness shadow for depth against the pure black
-        .shadow(color: Color.black.opacity(0.8), radius: 20, x: 0, y: 15)
+        .shadow(color: .vitalzShadow, radius: 20, x: 0, y: 15)
     }
 }
 
