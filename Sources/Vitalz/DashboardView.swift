@@ -607,75 +607,122 @@ struct ExpandedCardView: View {
     private let supportingTextColor = Color.white.opacity(0.65)
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HStack {
-                Text(card.title)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(supportingTextColor)
-                    .matchedGeometryEffect(id: "title\(card.id)", in: animation)
-                Spacer()
-                Image(systemName: card.icon)
-                    .foregroundColor(card.accentColor)
-                    .opacity(0.8)
-                    .matchedGeometryEffect(id: "icon\(card.id)", in: animation)
-                
-                Button(action: onClose) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title2)
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 20) {
+                // Header
+                HStack {
+                    Text(card.title)
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(supportingTextColor)
-                }
-                .padding(.leading, 8)
-            }
-            
-            Text(card.value)
-                .font(.system(size: 48, weight: .bold))
-                .foregroundColor(card.valueColor)
-                .minimumScaleFactor(0.5)
-                .lineLimit(1)
-                .matchedGeometryEffect(id: "value\(card.id)", in: animation)
-            
-            Text(card.subtitle)
-                .font(.system(size: 16, weight: .regular))
-                .foregroundColor(supportingTextColor)
-                .matchedGeometryEffect(id: "subtitle\(card.id)", in: animation)
-            
-            if showDetails {
-                VStack(spacing: 24) {
-                    Divider().background(Color.white.opacity(0.2)).padding(.vertical, 8)
+                        .matchedGeometryEffect(id: "title\(card.id)", in: animation)
+                    Spacer()
+                    Image(systemName: card.icon)
+                        .foregroundColor(card.accentColor)
+                        .opacity(0.8)
+                        .matchedGeometryEffect(id: "icon\(card.id)", in: animation)
                     
-                    // Simple Animated Bar Chart
-                    HStack(alignment: .bottom, spacing: 12) {
-                        ForEach(0..<card.chartData.count, id: \.self) { index in
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white.opacity(0.5))
-                                .frame(width: 20, height: 60 * card.chartData[index])
-                                .animation(.spring(response: 0.5, dampingFraction: 0.6).delay(Double(index) * 0.05), value: showDetails)
-                        }
+                    Button(action: onClose) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(supportingTextColor)
                     }
-                    .frame(height: 70)
-                    .padding(.bottom, 8)
+                    .padding(.leading, 8)
+                }
+                
+                // Big Value
+                Text(card.value)
+                    .font(.system(size: 48, weight: .bold))
+                    .foregroundColor(card.valueColor)
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
+                    .matchedGeometryEffect(id: "value\(card.id)", in: animation)
+                
+                Text(card.subtitle)
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundColor(supportingTextColor)
+                    .matchedGeometryEffect(id: "subtitle\(card.id)", in: animation)
+                
+                if showDetails {
+                    let detail = card.id.detailContent
                     
-                    Button(action: {
-                        ShareHelper.shareMilestone(title: card.title, subtitle: "Vitalz Checkpoint", statValue: card.value)
-                    }) {
+                    VStack(spacing: 20) {
+                        Divider().background(Color.white.opacity(0.15)).padding(.vertical, 4)
+                        
+                        // Unique Visualization
                         HStack {
-                            Image(systemName: "square.and.arrow.up")
-                            Text("Share Milestone")
-                                .font(.headline)
+                            Spacer()
+                            CardVisualization(cardID: card.id, card: card)
+                            Spacer()
                         }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.white.opacity(0.1))
-                        )
+                        .padding(.vertical, 8)
+                        
+                        // Description
+                        Text(detail.description)
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(.white.opacity(0.75))
+                            .lineSpacing(4)
+                            .fixedSize(horizontal: false, vertical: true)
+                        
+                        // Comparisons
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(detail.comparisons, id: \.self) { comparison in
+                                Text(comparison)
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.6))
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(Color.white.opacity(0.06))
+                                    .cornerRadius(10)
+                            }
+                        }
+                        
+                        // Fun Fact
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "lightbulb.fill")
+                                    .foregroundColor(.yellow)
+                                    .font(.system(size: 13))
+                                Text("Fun Fact")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(.yellow.opacity(0.9))
+                                    .textCase(.uppercase)
+                                    .kerning(1)
+                            }
+                            
+                            Text(detail.funFact)
+                                .font(.system(size: 13, weight: .regular))
+                                .foregroundColor(.white.opacity(0.7))
+                                .lineSpacing(3)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(14)
+                        .background(Color.yellow.opacity(0.08))
+                        .cornerRadius(14)
+                        
+                        // Share Button
+                        Button(action: {
+                            ShareHelper.shareMilestone(title: card.title, subtitle: "Vitalz Checkpoint", statValue: card.value)
+                        }) {
+                            HStack {
+                                Image(systemName: "square.and.arrow.up")
+                                Text("Share Milestone")
+                                    .font(.headline)
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.white.opacity(0.1))
+                            )
+                        }
                     }
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
                 }
-                .transition(.opacity.combined(with: .scale(scale: 0.95)))
             }
+            .padding(24)
         }
-        .padding(24)
         .background(
             RoundedRectangle(cornerRadius: 32)
                 .fill(card.color.opacity(0.95))
@@ -683,7 +730,7 @@ struct ExpandedCardView: View {
                 .shadow(color: .black.opacity(0.5), radius: 30, x: 0, y: 20)
         )
         .onAppear {
-            withAnimation(.easeOut(duration: 0.3).delay(0.2)) {
+            withAnimation(.easeOut(duration: 0.4).delay(0.25)) {
                 showDetails = true
             }
         }
