@@ -61,6 +61,21 @@ public struct DashboardView: View {
     }()
     
     public init() {}
+
+    private var topFade: some View {
+        LinearGradient(
+            colors: [
+                .vitalzBackground,
+                .vitalzBackground.opacity(0.88),
+                .vitalzBackground.opacity(0)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .frame(height: 72)
+        .ignoresSafeArea(edges: .top)
+        .allowsHitTesting(false)
+    }
     
     public var body: some View {
         ZStack {
@@ -202,8 +217,8 @@ public struct DashboardView: View {
                     }
                 }
             }
-            .safeAreaInset(edge: .top) {
-                Color.clear.frame(height: 0).background(.ultraThinMaterial)
+            .overlay(alignment: .top) {
+                topFade
             }
             
             // Expanded Overlay
