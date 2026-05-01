@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct CardData: Identifiable {
-    enum ID: String, Hashable {
+public struct CardData: Identifiable {
+    public enum ID: String, Hashable {
         case secondsAlive
         case heartbeats
         case breathsTaken
@@ -22,16 +22,29 @@ struct CardData: Identifiable {
         case wordsRead
     }
 
-    let id: ID
-    let title: String
-    let value: String
-    let subtitle: String
-    let chartData: [CGFloat]
-    let icon: String
-    let color: Color
-    let accentColor: Color
-    let valueColor: Color
-    var isFullWidth: Bool = false
+    public let id: ID
+    public let title: String
+    public let value: String
+    public let subtitle: String
+    public let chartData: [CGFloat]
+    public let icon: String
+    public let color: Color
+    public let accentColor: Color
+    public let valueColor: Color
+    public var isFullWidth: Bool = false
+    
+    public init(id: ID, title: String, value: String, subtitle: String, chartData: [CGFloat], icon: String, color: Color, accentColor: Color, valueColor: Color, isFullWidth: Bool = false) {
+        self.id = id
+        self.title = title
+        self.value = value
+        self.subtitle = subtitle
+        self.chartData = chartData
+        self.icon = icon
+        self.color = color
+        self.accentColor = accentColor
+        self.valueColor = valueColor
+        self.isFullWidth = isFullWidth
+    }
 }
 
 public struct DashboardView: View {
