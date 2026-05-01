@@ -11,6 +11,21 @@ public struct MilestonesView: View {
     
     public init() {}
     
+    private var topFade: some View {
+        LinearGradient(
+            colors: [
+                .vitalzBackground,
+                .vitalzBackground.opacity(0.88),
+                .vitalzBackground.opacity(0)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .frame(height: 72)
+        .ignoresSafeArea(edges: .top)
+        .allowsHitTesting(false)
+    }
+    
     public var body: some View {
         let math = LifeMath(dateOfBirth: profileStore.selectedProfile.effectiveDateOfBirth)
         let allMilestones = math.calculateMilestones()
@@ -38,7 +53,7 @@ public struct MilestonesView: View {
                                 Text(notificationManager.hasPermission ? "Active" : "Alert Me")
                                     .font(.system(size: 12, weight: .bold))
                             }
-                            .foregroundColor(notificationManager.hasPermission ? .vitalzBlue : .gray)
+                            .foregroundColor(notificationManager.hasPermission ? .vitalzBlue : .vitalzSecondaryText)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(Color.vitalzCard)
@@ -90,7 +105,7 @@ public struct MilestonesView: View {
                                 .padding(.horizontal, 24)
                                 
                                 // Timeline
-                                VStack(spacing: 0) {
+                                VStack(spacing: 12) {
                                     ForEach(items) { milestone in
                                         TimelineMilestoneRow(
                                             milestone: milestone,
@@ -107,6 +122,9 @@ public struct MilestonesView: View {
                     
                     Spacer(minLength: 80)
                 }
+            }
+            .overlay(alignment: .top) {
+                topFade
             }
         }
         .onReceive(timer) { input in
@@ -184,17 +202,17 @@ struct NextMilestoneBanner: View {
             HStack {
                 Text("NEXT UP")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(.vitalzSecondaryText)
                     .kerning(2)
                 Spacer()
                 Image(systemName: milestone.icon)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(.vitalzSecondaryText)
             }
             
             HStack(alignment: .firstTextBaseline) {
                 Text(milestone.title)
                     .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.vitalzText)
                 Spacer()
             }
             
@@ -204,30 +222,25 @@ struct NextMilestoneBanner: View {
                     .foregroundColor(.vitalzBlue)
                 Text("days away")
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(.vitalzSecondaryText)
                 Spacer()
             }
             
             Text(milestone.subtitle)
                 .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(.vitalzSecondaryText)
                 .lineSpacing(3)
         }
         .padding(24)
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(
-                    LinearGradient(
-                        colors: [Color(white: 0.12), Color(white: 0.08)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(Color.vitalzCard)
                 .overlay(
                     RoundedRectangle(cornerRadius: 24)
                         .stroke(Color.vitalzBlue.opacity(0.2), lineWidth: 1)
                 )
         )
+        .shadow(color: .vitalzShadow, radius: 15, x: 0, y: 10)
     }
 }
 
@@ -242,7 +255,7 @@ struct CategoryPill: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 13, weight: isSelected ? .bold : .medium))
-                .foregroundColor(isSelected ? .white : .gray)
+                .foregroundColor(isSelected ? .vitalzText : .vitalzSecondaryText)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(
@@ -278,7 +291,7 @@ struct TimelineMilestoneRow: View {
             VStack(spacing: 0) {
                 ZStack {
                     Circle()
-                        .fill(isFuture ? accentColor : Color.gray.opacity(0.3))
+                        .fill(isFuture ? accentColor : Color.vitalzSecondaryText.opacity(0.3))
                         .frame(width: 12, height: 12)
                     
                     if isFuture {
@@ -290,9 +303,9 @@ struct TimelineMilestoneRow: View {
                 
                 if !isLast {
                     Rectangle()
-                        .fill(Color.white.opacity(0.06))
+                        .fill(Color.vitalzDivider)
                         .frame(width: 2)
-                        .frame(minHeight: 60)
+                        .frame(minHeight: 40)
                 }
             }
             
@@ -301,20 +314,20 @@ struct TimelineMilestoneRow: View {
                 HStack {
                     Text(milestone.title)
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(isFuture ? .white : .white.opacity(0.4))
+                        .foregroundColor(isFuture ? .vitalzText : .vitalzSecondaryText.opacity(0.6))
                     
                     Spacer()
                     
                     if let date = milestone.date {
                         Text(formattedDate(date))
                             .font(.system(size: 11, weight: .medium, design: .monospaced))
-                            .foregroundColor(isFuture ? accentColor.opacity(0.7) : .gray.opacity(0.5))
+                            .foregroundColor(isFuture ? accentColor.opacity(0.7) : .vitalzSecondaryText.opacity(0.5))
                     }
                 }
                 
                 Text(milestone.subtitle)
                     .font(.system(size: 12, weight: .regular))
-                    .foregroundColor(isFuture ? .white.opacity(0.5) : .white.opacity(0.25))
+                    .foregroundColor(isFuture ? .vitalzSecondaryText : .vitalzSecondaryText.opacity(0.5))
                     .lineSpacing(2)
                 
                 if isFuture, let date = milestone.date {
@@ -346,7 +359,7 @@ struct TimelineMilestoneRow: View {
                                 .font(.system(size: 11, weight: .medium))
                         }
                     }
-                    .foregroundColor(.gray.opacity(0.5))
+                    .foregroundColor(.vitalzSecondaryText.opacity(0.5))
                     .padding(.top, 2)
                 }
             }
