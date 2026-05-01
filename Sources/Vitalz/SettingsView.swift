@@ -48,6 +48,16 @@ public struct SettingsView: View {
             }
         }
         .presentationDetents([.large])
+        .onChange(of: syncHealthApp) { newValue in
+            if newValue {
+                Task {
+                    let success = await HealthKitManager.shared.requestAuthorization()
+                    if !success {
+                        syncHealthApp = false
+                    }
+                }
+            }
+        }
         .sheet(item: $editingProfile) { profile in
             ProfileEditorView(profile: profile)
                 .environmentObject(profileStore)

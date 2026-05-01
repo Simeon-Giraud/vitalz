@@ -18,6 +18,10 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Vitalz uses your health data to calculate highly precise metrics such as your real heartbeats, breathing rates, and total steps, allowing for accurate and personalized life telemetry.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Vitalz may save milestones or summarized metrics to your Health app if you choose to sync them.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

@@ -51,6 +51,7 @@ public struct DashboardView: View {
     @State private var stats: LifeStats? = nil
     @State private var showingSettings = false
     @State private var showingRearrange = false
+    @State private var draggedItemID: String? = nil
     
     @Namespace private var animation
     @State private var selectedCardID: CardData.ID? = nil
@@ -101,13 +102,6 @@ public struct DashboardView: View {
                         }
                         
                         Spacer()
-                        
-                        VitalzGlassButton(shape: .circle, isProminent: false, action: { showingRearrange = true }) {
-                            Image(systemName: "arrow.up.arrow.down")
-                                .font(.system(size: 20))
-                                .foregroundColor(.vitalzText)
-                                .padding(12)
-                        }
                         
                         VitalzGlassButton(shape: .circle, isProminent: false, action: { showingSettings = true }) {
                             Image(systemName: "gearshape")
@@ -262,81 +256,92 @@ public struct DashboardView: View {
     
     @ViewBuilder
     private func renderElement(_ element: DashboardElement, percentageLived: Double) -> some View {
-        switch element {
-        case .card(let card):
-            Button(action: { selectCard(card) }) {
-                GridCardView(card: card, animation: animation, isSelected: selectedCardID == card.id)
-            }
-            .buttonStyle(.plain)
-            
-        case .adSpace:
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text("SPONSORED")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.vitalzSecondaryText)
-                        .kerning(1.2)
-                    Spacer()
-                    Image(systemName: "arrow.up.right.square")
-                        .foregroundColor(.vitalzSecondaryText)
+        Group {
+            switch element {
+            case .card(let card):
+                Button(action: { selectCard(card) }) {
+                    GridCardView(card: card, animation: animation, isSelected: selectedCardID == card.id)
                 }
+                .buttonStyle(.plain)
                 
-                Text("Your brand could be here")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.vitalzText)
-                
-                Text("Reach mindful users tracking their life stats")
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundColor(.vitalzSecondaryText)
-                
-                Spacer(minLength: 20)
-                Text("ads@vitalz.app")
-                    .font(.system(size: 13))
-                    .foregroundColor(.vitalzSecondaryText.opacity(0.7))
-            }
-            .padding(24)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.vitalzCard)
-            .cornerRadius(24)
-            
-        case .lifeLoading:
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text("Life Loading")
-                        .font(.system(size: 15))
-                        .foregroundColor(.vitalzSecondaryText)
-                    Spacer()
-                    Image(systemName: "sun.max.fill")
-                        .foregroundColor(.vitalzSecondaryText)
-                }
-                
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.vitalzControl)
-                            .frame(height: 12)
-                        
-                        Capsule()
-                            .fill(Color.green.opacity(0.8))
-                            .frame(width: geo.size.width * CGFloat(percentageLived / 100.0), height: 12)
+            case .adSpace:
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("SPONSORED")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.vitalzSecondaryText)
+                            .kerning(1.2)
+                        Spacer()
+                        Image(systemName: "arrow.up.right.square")
+                            .foregroundColor(.vitalzSecondaryText)
                     }
-                }
-                .frame(height: 12)
-                
-                HStack {
-                    Text("Life Completed")
-                        .font(.system(size: 15))
-                        .foregroundColor(.vitalzSecondaryText)
-                    Spacer()
-                    Text(String(format: "%.1f%%", percentageLived))
+                    
+                    Text("Your brand could be here")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.vitalzText)
+                    
+                    Text("Reach mindful users tracking their life stats")
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(.vitalzSecondaryText)
+                    
+                    Spacer(minLength: 20)
+                    Text("ads@vitalz.app")
+                        .font(.system(size: 13))
+                        .foregroundColor(.vitalzSecondaryText.opacity(0.7))
                 }
+                .padding(24)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.vitalzCard)
+                .cornerRadius(24)
+                
+            case .lifeLoading:
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("Life Loading")
+                            .font(.system(size: 15))
+                            .foregroundColor(.vitalzSecondaryText)
+                        Spacer()
+                        Image(systemName: "sun.max.fill")
+                            .foregroundColor(.vitalzSecondaryText)
+                    }
+                    
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(Color.vitalzControl)
+                                .frame(height: 12)
+                            
+                            Capsule()
+                                .fill(Color.green.opacity(0.8))
+                                .frame(width: geo.size.width * CGFloat(percentageLived / 100.0), height: 12)
+                        }
+                    }
+                    .frame(height: 12)
+                    
+                    HStack {
+                        Text("Life Completed")
+                            .font(.system(size: 15))
+                            .foregroundColor(.vitalzSecondaryText)
+                        Spacer()
+                        Text(String(format: "%.1f%%", percentageLived))
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.vitalzText)
+                    }
+                }
+                .padding(24)
+                .background(Color.vitalzCard)
+                .cornerRadius(24)
             }
-            .padding(24)
-            .background(Color.vitalzCard)
-            .cornerRadius(24)
         }
+        .onDrag {
+            self.draggedItemID = element.id
+            return NSItemProvider(object: element.id as NSString)
+        }
+        .onDrop(of: [.text], delegate: DashboardDropDelegate(
+            itemID: element.id,
+            cardOrder: $cardOrder,
+            draggedItemID: $draggedItemID
+        ))
     }
 
     private func selectCard(_ card: CardData) {
@@ -465,6 +470,40 @@ public struct DashboardView: View {
         }
 
         return formatDouble(meters * 3.28084) + "ft"
+    }
+}
+
+// MARK: - Drag & Drop Delegate
+
+struct DashboardDropDelegate: DropDelegate {
+    let itemID: String
+    @Binding var cardOrder: String
+    @Binding var draggedItemID: String?
+
+    func dropEntered(info: DropInfo) {
+        guard let dragged = draggedItemID,
+              dragged != itemID else { return }
+        
+        var items = cardOrder.components(separatedBy: ",")
+        guard let from = items.firstIndex(of: dragged),
+              let to = items.firstIndex(of: itemID) else { return }
+        
+        if from != to {
+            withAnimation(.default) {
+                let moved = items.remove(at: from)
+                items.insert(moved, at: to)
+                cardOrder = items.joined(separator: ",")
+            }
+        }
+    }
+    
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        return DropProposal(operation: .move)
+    }
+    
+    func performDrop(info: DropInfo) -> Bool {
+        self.draggedItemID = nil
+        return true
     }
 }
 

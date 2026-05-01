@@ -8,6 +8,11 @@ targets:
     deploymentTarget: "26.0"
     sources:
       - path: Sources/Vitalz
+    entitlements:
+      path: Sources/Vitalz/Vitalz.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: ["health-records"]
     settings:
       INFOPLIST_FILE: Sources/Vitalz/Info.plist
       PRODUCT_BUNDLE_IDENTIFIER: com.simeon.vitalz
@@ -15,8 +20,8 @@ targets:
       CURRENT_PROJECT_VERSION: 1
       CODE_SIGNING_ALLOWED: NO
       CODE_SIGNING_REQUIRED: NO
-      CODE_SIGNING_IDENTITY: ""
-      CODE_SIGN_ENTITLEMENTS: ""
+      CODE_SIGN_IDENTITY: ""
+      CODE_SIGN_ENTITLEMENTS: "Sources/Vitalz/Vitalz.entitlements"
       CODE_SIGN_STYLE: Manual
       PROVISIONING_PROFILE_SPECIFIER: ""
       DEVELOPMENT_TEAM: ""
