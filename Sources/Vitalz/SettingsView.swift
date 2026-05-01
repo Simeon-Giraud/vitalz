@@ -15,6 +15,7 @@ public struct SettingsView: View {
     @AppStorage("showTimesBlinked") private var showTimesBlinked: Bool = true
     @AppStorage("showHairGrowth") private var showHairGrowth: Bool = true
     @AppStorage("showSpaceTraveler") private var showSpaceTraveler: Bool = true
+    @AppStorage("useMetricUnits") private var useMetricUnits: Bool = true
 
     @State private var selectedTab = 1
     @State private var editingProfile: VitalzProfile?
@@ -64,13 +65,11 @@ public struct SettingsView: View {
 
             Spacer()
 
-            Button(action: { dismiss() }) {
+            VitalzGlassButton(shape: .circle, isProminent: false, action: { dismiss() }) {
                 Image(systemName: "xmark")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.vitalzSecondaryText)
                     .padding(10)
-                    .background(Color.vitalzControl)
-                    .clipShape(Circle())
             }
         }
         .padding(24)
@@ -103,6 +102,28 @@ public struct SettingsView: View {
     private var dashboardSection: some View {
         VStack(alignment: .leading, spacing: 32) {
             VStack(alignment: .leading, spacing: 16) {
+                Text("Units")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(.vitalzSecondaryText)
+
+                HStack(spacing: 12) {
+                    UnitChoiceButton(
+                        title: "Metric",
+                        subtitle: "km, m, cm",
+                        isSelected: useMetricUnits,
+                        action: { useMetricUnits = true }
+                    )
+
+                    UnitChoiceButton(
+                        title: "Imperial",
+                        subtitle: "mi, ft, in",
+                        isSelected: !useMetricUnits,
+                        action: { useMetricUnits = false }
+                    )
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 16) {
                 Text("Manage Visibility")
                     .font(.system(size: 14, weight: .regular))
                     .foregroundColor(.vitalzSecondaryText)
@@ -124,14 +145,12 @@ public struct SettingsView: View {
                 .cornerRadius(16)
             }
 
-            Button(action: resetIdentity) {
+            VitalzGlassButton(shape: .rounded(16), isProminent: false, action: resetIdentity) {
                 Text("Reset Identity")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.red)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(Color.vitalzCard)
-                    .cornerRadius(16)
             }
         }
     }
@@ -161,7 +180,7 @@ public struct SettingsView: View {
             .background(Color.vitalzCard)
             .cornerRadius(16)
 
-            Button(action: { isAddingProfile = true }) {
+            VitalzGlassButton(shape: .rounded(16), isProminent: false, action: { isAddingProfile = true }) {
                 HStack(spacing: 12) {
                     Image(systemName: "plus.circle.fill")
                     Text("Add Profile")
@@ -170,8 +189,6 @@ public struct SettingsView: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.vitalzBlue)
                 .padding(16)
-                .background(Color.vitalzCard)
-                .cornerRadius(16)
             }
         }
     }
@@ -235,6 +252,33 @@ struct ProfileRow: View {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         return formatter.string(from: date)
+    }
+}
+
+struct UnitChoiceButton: View {
+    let title: String
+    let subtitle: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        VitalzGlassButton(shape: .rounded(16), isProminent: isSelected, action: action) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(title)
+                        .font(.system(size: 15, weight: .bold))
+                    Spacer()
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                }
+
+                Text(subtitle)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.vitalzSecondaryText)
+            }
+            .foregroundColor(isSelected ? .white : .vitalzText)
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 }
 
@@ -361,8 +405,13 @@ struct ProfileEditorView: View {
 
                 if imageData != nil {
                     Section {
-                        Button("Remove Photo", role: .destructive) {
+                        VitalzGlassButton(shape: .rounded(14), isProminent: false, action: {
                             imageData = nil
+                        }) {
+                            Text("Remove Photo")
+                                .foregroundColor(.red)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
                         }
                     }
                 }
@@ -371,11 +420,15 @@ struct ProfileEditorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    VitalzGlassButton(shape: .capsule, isProminent: false, action: { dismiss() }) {
+                        Text("Cancel")
+                    }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save", action: save)
+                    VitalzGlassButton(shape: .capsule, isProminent: true, action: save) {
+                        Text("Save")
+                    }
                 }
             }
             .task(id: selectedPhotoItem) {
@@ -452,14 +505,12 @@ struct TabButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        VitalzGlassButton(shape: .capsule, isProminent: isSelected, action: action) {
             Text(title)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(isSelected ? .white : .vitalzSecondaryText)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(isSelected ? Color.vitalzBlue : Color.vitalzControl)
-                .cornerRadius(20)
         }
     }
 }

@@ -44,6 +44,7 @@ public struct DashboardView: View {
     @AppStorage("showTimesBlinked") private var showTimesBlinked: Bool = true
     @AppStorage("showHairGrowth") private var showHairGrowth: Bool = true
     @AppStorage("showSpaceTraveler") private var showSpaceTraveler: Bool = true
+    @AppStorage("useMetricUnits") private var useMetricUnits: Bool = true
     
     @State private var currentDate = Date()
     @State private var stats: LifeStats? = nil
@@ -99,13 +100,11 @@ public struct DashboardView: View {
                         
                         Spacer()
                         
-                        Button(action: { showingSettings = true }) {
+                        VitalzGlassButton(shape: .circle, isProminent: false, action: { showingSettings = true }) {
                             Image(systemName: "gearshape")
                                 .font(.system(size: 20))
                                 .foregroundColor(.vitalzText)
                                 .padding(12)
-                                .background(Color.vitalzControl)
-                                .clipShape(Circle())
                         }
                     }
                     .padding(.horizontal, 20)
@@ -336,8 +335,8 @@ public struct DashboardView: View {
             CardData(id: .heartbeats, title: "Heartbeats", value: formatMillions(stats.estimatedTotalHeartbeats), subtitle: "@ 70 bpm", chartData: ascendingData, icon: "heart", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)),
             CardData(id: .breathsTaken, title: "Breaths Taken", value: formatMillions(stats.estimatedBreathsTaken), subtitle: "@ 16/min", chartData: ascendingData, icon: "wind", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)),
             CardData(id: .timesBlinked, title: "Times Blinked", value: formatMillions(stats.estimatedBlinks), subtitle: "while awake", chartData: ascendingData, icon: "eye", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)),
-            CardData(id: .hairGrowth, title: "Hair Growth", value: formatDouble(stats.hairGrowthMeters) + "m", subtitle: "of hair grown", chartData: ascendingData, icon: "scissors", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)),
-            CardData(id: .spaceTraveler, title: "Space Traveler", value: formatBillions(stats.distanceTraveledSpaceKm), subtitle: "km around Sun", chartData: ascendingData, icon: "location.north.fill", color: purpleColor, accentColor: .blue, valueColor: .white),
+            CardData(id: .hairGrowth, title: "Hair Growth", value: formattedLength(meters: stats.hairGrowthMeters), subtitle: "of hair grown", chartData: ascendingData, icon: "scissors", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)),
+            CardData(id: .spaceTraveler, title: "Space Traveler", value: formattedDistance(kilometers: stats.distanceTraveledSpaceKm), subtitle: useMetricUnits ? "km around Sun" : "mi around Sun", chartData: ascendingData, icon: "location.north.fill", color: purpleColor, accentColor: .blue, valueColor: .white),
             CardData(id: .fullMoons, title: "Full Moons", value: formatLargeNumber(stats.fullMoonsWitnessed), subtitle: "witnessed", chartData: ascendingData, icon: "moon", color: purpleColor, accentColor: .blue, valueColor: .white),
             CardData(id: .jupiterAge, title: "Jupiter Age", value: formatDouble(stats.jupiterAge, decimals: 2), subtitle: "years on Jupiter", chartData: ascendingData, icon: "globe", color: purpleColor, accentColor: .blue, valueColor: .white),
             CardData(id: .sleep, title: "Sleep", value: formatDouble(stats.estimatedHoursSlept / 24.0 / 365.25) + " yrs", subtitle: "spent dreaming", chartData: ascendingData, icon: "moon.zzz", color: blueColor, accentColor: .blue, valueColor: .white),
@@ -377,7 +376,7 @@ public struct DashboardView: View {
         if let heightCentimeters = profile.heightCentimeters, heightCentimeters > 0 {
             let nailGrowthMeters = Double(stats.totalDaysAlive) * 0.0001 * 20.0
             let bodyHeights = nailGrowthMeters / (heightCentimeters / 100.0)
-            cards.append(CardData(id: .nailGrowth, title: "Nail Growth", value: formatDouble(nailGrowthMeters) + "m", subtitle: "\(formatDouble(bodyHeights)) body heights", chartData: ascendingData, icon: "hand.raised", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)))
+            cards.append(CardData(id: .nailGrowth, title: "Nail Growth", value: formattedLength(meters: nailGrowthMeters), subtitle: "\(formatDouble(bodyHeights)) body heights", chartData: ascendingData, icon: "hand.raised", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)))
         }
 
         if let readingSpeed = profile.readingSpeed {
@@ -392,6 +391,23 @@ public struct DashboardView: View {
 
     private func days(from startDate: Date, to endDate: Date) -> Int {
         max(0, Calendar.current.dateComponents([.day], from: startDate, to: endDate).day ?? 0)
+    }
+
+    private func formattedDistance(kilometers: Int) -> String {
+        if useMetricUnits {
+            return formatBillions(kilometers)
+        }
+
+        let miles = Double(kilometers) * 0.621371
+        return String(format: "%.1fB", miles / 1_000_000_000.0)
+    }
+
+    private func formattedLength(meters: Double) -> String {
+        if useMetricUnits {
+            return formatDouble(meters) + "m"
+        }
+
+        return formatDouble(meters * 3.28084) + "ft"
     }
 }
 
