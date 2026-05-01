@@ -5,21 +5,21 @@ public struct MilestonesView: View {
     @EnvironmentObject private var profileStore: ProfileStore
     @StateObject private var notificationManager = NotificationManager.shared
     
-    // Updates UI dynamically around midnight or when left open
     @State private var currentDate = Date()
+    @State private var selectedCategory: Milestone.MilestoneCategory? = nil
     private let timer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
     
     public init() {}
     
     public var body: some View {
         let math = LifeMath(dateOfBirth: profileStore.selectedProfile.effectiveDateOfBirth)
-        let milestones = math.calculateMilestones()
+        let allMilestones = math.calculateMilestones()
         
         ZStack {
             Color.vitalzBackground.ignoresSafeArea()
             
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 40) {
+                VStack(spacing: 32) {
                     
                     // Header
                     HStack {
@@ -29,9 +29,8 @@ public struct MilestonesView: View {
                             .kerning(6)
                         Spacer()
                         
-                        // Notifications Toggle/Opt-In
                         Button(action: {
-                            setupNotifications(math: math)
+                            setupNotifications(milestones: allMilestones)
                         }) {
                             HStack(spacing: 6) {
                                 Image(systemName: notificationManager.hasPermission ? "bell.badge.fill" : "bell.fill")
@@ -49,33 +48,64 @@ public struct MilestonesView: View {
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
                     
-                    VStack(spacing: 24) {
-                        DynamicMilestoneCard(
-                            titleLabel: "10,000th Day",
-                            targetInSentence: "10,000th day alive",
-                            date: milestones.tenThousandthDay,
-                            iconSystemName: "sun.max",
-                            currentDate: currentDate
-                        )
-                        
-                        DynamicMilestoneCard(
-                            titleLabel: "1 Billionth Second",
-                            targetInSentence: "1 billionth second alive",
-                            date: milestones.oneBillionthSecond,
-                            iconSystemName: "hourglass",
-                            currentDate: currentDate
-                        )
-                        
-                        DynamicMilestoneCard(
-                            titleLabel: "500M Heartbeats",
-                            targetInSentence: "500,000,000th heartbeat",
-                            date: milestones.fiveHundredMillionthHeartbeat,
-                            iconSystemName: "heart.circle",
-                            currentDate: currentDate
-                        )
+                    // Next Up Banner
+                    if let nextMilestone = allMilestones.first(where: { ($0.date ?? .distantPast) > currentDate }) {
+                        NextMilestoneBanner(milestone: nextMilestone, currentDate: currentDate)
+                            .padding(.horizontal, 24)
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 60)
+                    
+                    // Category Filter
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 10) {
+                            CategoryPill(title: "All", isSelected: selectedCategory == nil) {
+                                withAnimation(.spring(response: 0.3)) { selectedCategory = nil }
+                            }
+                            
+                            ForEach(Milestone.MilestoneCategory.allCases, id: \.rawValue) { cat in
+                                CategoryPill(title: categoryShortName(cat), isSelected: selectedCategory == cat) {
+                                    withAnimation(.spring(response: 0.3)) { selectedCategory = cat }
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 24)
+                    }
+                    
+                    // Milestone Cards by Category
+                    let filtered = selectedCategory == nil ? allMilestones : allMilestones.filter { $0.category == selectedCategory }
+                    let grouped = Dictionary(grouping: filtered, by: { $0.category })
+                    
+                    ForEach(Milestone.MilestoneCategory.allCases, id: \.rawValue) { category in
+                        if let items = grouped[category], !items.isEmpty {
+                            VStack(alignment: .leading, spacing: 16) {
+                                // Section Header
+                                HStack(spacing: 10) {
+                                    Image(systemName: categoryIcon(category))
+                                        .font(.system(size: 14))
+                                        .foregroundColor(categoryColor(category))
+                                    Text(category.rawValue.uppercased())
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundColor(categoryColor(category))
+                                        .kerning(1.5)
+                                }
+                                .padding(.horizontal, 24)
+                                
+                                // Timeline
+                                VStack(spacing: 0) {
+                                    ForEach(items) { milestone in
+                                        TimelineMilestoneRow(
+                                            milestone: milestone,
+                                            currentDate: currentDate,
+                                            accentColor: categoryColor(milestone.category),
+                                            isLast: milestone.id == items.last?.id
+                                        )
+                                    }
+                                }
+                                .padding(.horizontal, 24)
+                            }
+                        }
+                    }
+                    
+                    Spacer(minLength: 80)
                 }
             }
         }
@@ -83,7 +113,6 @@ public struct MilestonesView: View {
             currentDate = input
         }
         .onAppear {
-            // Attempt to read current permission state silently on load
             UNUserNotificationCenter.current().getNotificationSettings { settings in
                 DispatchQueue.main.async {
                     notificationManager.hasPermission = settings.authorizationStatus == .authorized
@@ -92,162 +121,252 @@ public struct MilestonesView: View {
         }
     }
     
-    private func setupNotifications(math: LifeMath) {
+    // MARK: - Helpers
+    
+    private func categoryShortName(_ cat: Milestone.MilestoneCategory) -> String {
+        switch cat {
+        case .chronological: return "Time"
+        case .biological: return "Body"
+        case .cosmic: return "Cosmic"
+        case .quirky: return "Quirky"
+        case .lifeAnchors: return "Life %"
+        }
+    }
+    
+    private func categoryIcon(_ cat: Milestone.MilestoneCategory) -> String {
+        switch cat {
+        case .chronological: return "clock"
+        case .biological: return "heart"
+        case .cosmic: return "moon.stars"
+        case .quirky: return "sparkles"
+        case .lifeAnchors: return "chart.bar"
+        }
+    }
+    
+    private func categoryColor(_ cat: Milestone.MilestoneCategory) -> Color {
+        switch cat {
+        case .chronological: return .yellow
+        case .biological: return .red
+        case .cosmic: return .blue
+        case .quirky: return .purple
+        case .lifeAnchors: return .green
+        }
+    }
+    
+    private func setupNotifications(milestones: [Milestone]) {
         notificationManager.requestAuthorization()
         
-        let milestones = math.calculateMilestones()
+        let futureMilestones = milestones.filter { ($0.date ?? .distantPast) > currentDate }
         
-        if let d = milestones.tenThousandthDay {
+        // Schedule up to 10 upcoming milestones (iOS limit is 64 pending)
+        for milestone in futureMilestones.prefix(10) {
+            guard let date = milestone.date else { continue }
             notificationManager.scheduleMilestoneNotification(
-                title: "10,000 Days Alive",
-                body: "Today you mark your 10,000th sunrise on Earth. Make it incredible.",
-                date: d,
-                identifier: "milestone.10kdays"
+                title: milestone.title,
+                body: milestone.subtitle,
+                date: date,
+                identifier: "milestone.\(milestone.id)"
             )
         }
+    }
+}
+
+// MARK: - Next Milestone Banner
+
+struct NextMilestoneBanner: View {
+    let milestone: Milestone
+    let currentDate: Date
+    
+    var body: some View {
+        let daysLeft = Calendar.current.dateComponents([.day], from: currentDate, to: milestone.date ?? currentDate).day ?? 0
         
-        notificationManager.scheduleMilestoneNotification(
-            title: "1 Billion Seconds",
-            body: "Your one billionth tick of the clock has arrived. Every second counts.",
-            date: milestones.oneBillionthSecond,
-            identifier: "milestone.1bseconds"
-        )
-        
-        notificationManager.scheduleMilestoneNotification(
-            title: "500 Million Heartbeats",
-            body: "Your heart just hit the 500 million mark. A phenomenal achievement.",
-            date: milestones.fiveHundredMillionthHeartbeat,
-            identifier: "milestone.500mheartbeats"
+        VStack(spacing: 16) {
+            HStack {
+                Text("NEXT UP")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white.opacity(0.5))
+                    .kerning(2)
+                Spacer()
+                Image(systemName: milestone.icon)
+                    .foregroundColor(.white.opacity(0.6))
+            }
+            
+            HStack(alignment: .firstTextBaseline) {
+                Text(milestone.title)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(.white)
+                Spacer()
+            }
+            
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text("\(daysLeft)")
+                    .font(.system(size: 36, weight: .bold, design: .monospaced))
+                    .foregroundColor(.vitalzBlue)
+                Text("days away")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+                Spacer()
+            }
+            
+            Text(milestone.subtitle)
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.5))
+                .lineSpacing(3)
+        }
+        .padding(24)
+        .background(
+            RoundedRectangle(cornerRadius: 24)
+                .fill(
+                    LinearGradient(
+                        colors: [Color(white: 0.12), Color(white: 0.08)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(Color.vitalzBlue.opacity(0.2), lineWidth: 1)
+                )
         )
     }
 }
 
-// MARK: - Subcomponents
+// MARK: - Category Pill
 
-struct DynamicMilestoneCard: View {
-    let titleLabel: String
-    let targetInSentence: String
-    let date: Date?
-    let iconSystemName: String
+struct CategoryPill: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 13, weight: isSelected ? .bold : .medium))
+                .foregroundColor(isSelected ? .white : .gray)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(isSelected ? Color.vitalzBlue.opacity(0.3) : Color.vitalzCard)
+                )
+                .overlay(
+                    Capsule()
+                        .stroke(isSelected ? Color.vitalzBlue.opacity(0.5) : Color.clear, lineWidth: 1)
+                )
+        }
+    }
+}
+
+// MARK: - Timeline Milestone Row
+
+struct TimelineMilestoneRow: View {
+    let milestone: Milestone
     let currentDate: Date
+    let accentColor: Color
+    let isLast: Bool
     
     private var isFuture: Bool {
-        guard let d = date else { return false }
+        guard let d = milestone.date else { return false }
         return d > currentDate
     }
     
-    var body: some View {
-        HStack(alignment: .top, spacing: 20) {
-            // Left Custom Icon
-            ZStack {
-                Circle()
-                    .fill(Color.vitalzBackground)
-                    .frame(width: 56, height: 56)
-                
-                Image(systemName: iconSystemName)
-                    .font(.system(size: 20, weight: .light))
-                    // Dimmed if the event already happened
-                    .foregroundColor(isFuture ? .vitalzBlue : .gray.opacity(0.5))
-            }
-            .shadow(color: .vitalzShadow.opacity(0.5), radius: 5, x: 0, y: 3)
-            
-            // Text Content
-            VStack(alignment: .leading, spacing: 10) {
-                Text(titleLabel.uppercased())
-                    .font(.system(size: 13, weight: .bold, design: .serif))
-                    .foregroundColor(isFuture ? .vitalzText : .vitalzText.opacity(0.4))
-                    .kerning(1.2)
-                
-                if let validDate = date {
-                    DynamicMessageView(target: targetInSentence, date: validDate, currentDate: currentDate)
-                } else {
-                    Text("Date Unavailable")
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(.gray)
-                }
-            }
-            .padding(.top, 4)
-            
-            Spacer()
-        }
-        .padding(24)
-        .background(Color.vitalzCard)
-        .cornerRadius(24)
-        .shadow(color: .vitalzShadow, radius: 15, x: 0, y: 10)
-        // Wash out border style if event passed
-        .overlay(
-            RoundedRectangle(cornerRadius: 24)
-                .stroke(isFuture ? Color.clear : Color.vitalzText.opacity(0.05), lineWidth: 1)
-        )
-    }
-}
-
-/// Constructs the specific natural language strings requested
-struct DynamicMessageView: View {
-    let target: String
-    let date: Date
-    let currentDate: Date
+    private var isPast: Bool { !isFuture }
     
     var body: some View {
-        let calendar = Calendar.current
-        
-        if date > currentDate {
-            let components = calendar.dateComponents([.day], from: currentDate, to: date)
-            let days = components.day ?? 0
-            
-            if days > 0 {
-                // Future milestone countdown
-                Text("In ")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.gray)
-                + Text("\(days)")
-                    // Blue highlight for the countdown digits
-                    .font(.system(size: 16, weight: .bold, design: .default))
-                    .foregroundColor(.vitalzBlue)
-                + Text(" days you hit your \(target)")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.gray)
-            } else {
-                Text("Happening within 24 hours!")
-                    .font(.system(size: 13, weight: .bold, design: .default))
-                    .foregroundColor(.vitalzBlue)
+        HStack(alignment: .top, spacing: 16) {
+            // Timeline dot + line
+            VStack(spacing: 0) {
+                ZStack {
+                    Circle()
+                        .fill(isFuture ? accentColor : Color.gray.opacity(0.3))
+                        .frame(width: 12, height: 12)
+                    
+                    if isFuture {
+                        Circle()
+                            .fill(accentColor.opacity(0.3))
+                            .frame(width: 20, height: 20)
+                    }
+                }
+                
+                if !isLast {
+                    Rectangle()
+                        .fill(Color.white.opacity(0.06))
+                        .frame(width: 2)
+                        .frame(minHeight: 60)
+                }
             }
-        } else {
-            // Past Milestone Calculation
-            let components = calendar.dateComponents([.year, .month, .day], from: date, to: currentDate)
-            let years = components.year ?? 0
-            let months = components.month ?? 0
-            let days = components.day ?? 0
             
-            // Revert to a subtle styling for past events
-            let baseStyle = Font.system(size: 13, weight: .medium)
-            
-            if years > 0 {
-                Text("Passed ")
-                    .font(baseStyle).foregroundColor(.gray)
-                + Text("\(years) \(years == 1 ? "year" : "years")")
-                    .font(baseStyle).foregroundColor(.vitalzText.opacity(0.4))
-                + Text(" ago")
-                    .font(baseStyle).foregroundColor(.gray)
-            } else if months > 0 {
-                Text("Passed ")
-                    .font(baseStyle).foregroundColor(.gray)
-                + Text("\(months) \(months == 1 ? "month" : "months")")
-                    .font(baseStyle).foregroundColor(.vitalzText.opacity(0.4))
-                + Text(" ago")
-                    .font(baseStyle).foregroundColor(.gray)
-            } else if days > 0 {
-                Text("Passed ")
-                    .font(baseStyle).foregroundColor(.gray)
-                + Text("\(days) \(days == 1 ? "day" : "days")")
-                    .font(baseStyle).foregroundColor(.vitalzText.opacity(0.4))
-                + Text(" ago")
-                    .font(baseStyle).foregroundColor(.gray)
-            } else {
-                Text("Reached today!")
-                    .font(baseStyle).foregroundColor(.vitalzText.opacity(0.4))
+            // Card content
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(milestone.title)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(isFuture ? .white : .white.opacity(0.4))
+                    
+                    Spacer()
+                    
+                    if let date = milestone.date {
+                        Text(formattedDate(date))
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .foregroundColor(isFuture ? accentColor.opacity(0.7) : .gray.opacity(0.5))
+                    }
+                }
+                
+                Text(milestone.subtitle)
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundColor(isFuture ? .white.opacity(0.5) : .white.opacity(0.25))
+                    .lineSpacing(2)
+                
+                if isFuture, let date = milestone.date {
+                    let days = Calendar.current.dateComponents([.day], from: currentDate, to: date).day ?? 0
+                    HStack(spacing: 4) {
+                        Image(systemName: "clock")
+                            .font(.system(size: 10))
+                        Text(days == 0 ? "Today!" : "\(days) days away")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .foregroundColor(accentColor.opacity(0.8))
+                    .padding(.top, 2)
+                } else if isPast, let date = milestone.date {
+                    let components = Calendar.current.dateComponents([.year, .month], from: date, to: currentDate)
+                    let years = components.year ?? 0
+                    let months = components.month ?? 0
+                    
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 10))
+                        if years > 0 {
+                            Text("\(years)y \(months)m ago")
+                                .font(.system(size: 11, weight: .medium))
+                        } else if months > 0 {
+                            Text("\(months)m ago")
+                                .font(.system(size: 11, weight: .medium))
+                        } else {
+                            Text("Recently")
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                    }
+                    .foregroundColor(.gray.opacity(0.5))
+                    .padding(.top, 2)
+                }
             }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(isFuture ? Color.vitalzCard : Color.vitalzCard.opacity(0.4))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isFuture ? accentColor.opacity(0.1) : Color.clear, lineWidth: 1)
+            )
         }
+    }
+    
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy"
+        return formatter.string(from: date)
     }
 }
 

@@ -17,6 +17,8 @@ public struct SettingsView: View {
     @AppStorage("showSpaceTraveler") private var showSpaceTraveler: Bool = true
     @AppStorage("useMetricUnits") private var useMetricUnits: Bool = true
     @AppStorage("syncHealthApp") private var syncHealthApp: Bool = false
+    @AppStorage("averageScreenTime") private var averageScreenTime: Double = 0.0
+    @AppStorage("dailyCoffeeCups") private var dailyCoffeeCups: Int = 0
 
     @State private var selectedTab = 1
     @State private var editingProfile: VitalzProfile?
@@ -164,6 +166,60 @@ public struct SettingsView: View {
                 .padding(.vertical, 14)
                 .background(Color(white: 0.15))
                 .cornerRadius(16)
+            }
+
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Your Habits")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(.gray)
+                
+                VStack(spacing: 0) {
+                    // Screen Time Input
+                    HStack {
+                        Image(systemName: "iphone")
+                            .foregroundColor(.blue)
+                            .frame(width: 24)
+                        Text("Daily Screen Time")
+                            .foregroundColor(.white)
+                        Spacer()
+                        Picker("", selection: $averageScreenTime) {
+                            Text("Not set").tag(0.0)
+                            ForEach(Array(stride(from: 0.5, through: 12.0, by: 0.5)), id: \.self) { hours in
+                                Text("\(String(format: "%.1f", hours))h").tag(hours)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                    }
+                    .padding(16)
+                    .background(Color(white: 0.15))
+                    
+                    Divider().background(Color.white.opacity(0.1)).padding(.horizontal, 16)
+                    
+                    // Coffee Input
+                    HStack {
+                        Image(systemName: "cup.and.saucer.fill")
+                            .foregroundColor(.red)
+                            .frame(width: 24)
+                        Text("Coffee Cups / Day")
+                            .foregroundColor(.white)
+                        Spacer()
+                        Picker("", selection: $dailyCoffeeCups) {
+                            Text("Not set").tag(0)
+                            ForEach(1...15, id: \.self) { count in
+                                Text("\(count) \(count == 1 ? "cup" : "cups")").tag(count)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                    }
+                    .padding(16)
+                    .background(Color(white: 0.15))
+                }
+                .cornerRadius(16)
+                
+                Text("Providing these enables the 'Phone Void' and 'Caffeine River' stats on your dashboard.")
+                    .font(.system(size: 12))
+                    .foregroundColor(.gray)
+                    .padding(.horizontal, 8)
             }
 
             VStack(alignment: .leading, spacing: 16) {

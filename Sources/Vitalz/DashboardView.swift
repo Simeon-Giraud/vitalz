@@ -46,6 +46,8 @@ public struct DashboardView: View {
     @AppStorage("showSpaceTraveler") private var showSpaceTraveler: Bool = true
     @AppStorage("useMetricUnits") private var useMetricUnits: Bool = true
     @AppStorage("cardOrder") private var cardOrder: String = ""
+    @AppStorage("averageScreenTime") private var averageScreenTime: Double = 0.0
+    @AppStorage("dailyCoffeeCups") private var dailyCoffeeCups: Int = 0
     
     @State private var currentDate = Date()
     @State private var stats: LifeStats? = nil
@@ -183,10 +185,13 @@ public struct DashboardView: View {
         if showSpaceTraveler { ids.append(.spaceTraveler) }
         
         ids.append(contentsOf: [
-            .fullMoons, .jupiterAge, .sleep, .phoneVoid, .caffeineRiver,
+            .fullMoons, .jupiterAge, .sleep,
             .sunsets, .passionEra, .masteryHours, .sharedDays,
             .sharedHeartbeats, .nailGrowth, .wordsRead
         ])
+        
+        if averageScreenTime > 0 { ids.append(.phoneVoid) }
+        if dailyCoffeeCups > 0 { ids.append(.caffeineRiver) }
         
         return ids
     }
@@ -357,7 +362,11 @@ public struct DashboardView: View {
     }
     
     private func updateStats(for date: Date) {
-        let math = LifeMath(dateOfBirth: profileStore.selectedProfile.effectiveDateOfBirth)
+        let math = LifeMath(
+            dateOfBirth: profileStore.selectedProfile.effectiveDateOfBirth,
+            averagePhoneHoursPerDay: averageScreenTime,
+            dailyCoffeeCups: dailyCoffeeCups
+        )
         self.stats = math.calculateStats(upTo: date)
     }
 
