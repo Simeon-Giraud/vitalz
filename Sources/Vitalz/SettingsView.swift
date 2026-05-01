@@ -16,6 +16,7 @@ public struct SettingsView: View {
     @AppStorage("showHairGrowth") private var showHairGrowth: Bool = true
     @AppStorage("showSpaceTraveler") private var showSpaceTraveler: Bool = true
     @AppStorage("useMetricUnits") private var useMetricUnits: Bool = true
+    @AppStorage("syncHealthApp") private var syncHealthApp: Bool = false
 
     @State private var selectedTab = 1
     @State private var editingProfile: VitalzProfile?
@@ -121,6 +122,38 @@ public struct SettingsView: View {
                         action: { useMetricUnits = false }
                     )
                 }
+            }
+
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Integrations")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(.gray)
+                
+                HStack(spacing: 16) {
+                    Image(systemName: "heart.fill")
+                        .foregroundColor(.red)
+                        .frame(width: 24)
+                        .font(.system(size: 20))
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Apple Health")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                        Text("Sync for precise live stats")
+                            .font(.system(size: 13))
+                            .foregroundColor(.gray)
+                    }
+                    
+                    Spacer()
+                    
+                    Toggle("", isOn: $syncHealthApp)
+                        .labelsHidden()
+                        .tint(.blue)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .background(Color(white: 0.15))
+                .cornerRadius(16)
             }
 
             VStack(alignment: .leading, spacing: 16) {
