@@ -8,6 +8,7 @@ public struct SettingsView: View {
 
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     @AppStorage("appTheme") private var appTheme: Int = 0 // 0: System, 1: Light, 2: Dark
+    @AppStorage("accentTheme") private var accentTheme: String = AccentTheme.electricBlue.rawValue
 
     @AppStorage("showSecondsAlive") private var showSecondsAlive: Bool = true
     @AppStorage("showHeartbeats") private var showHeartbeats: Bool = true
@@ -98,17 +99,127 @@ public struct SettingsView: View {
         .padding(.bottom, 16)
     }
 
+    private var selectedAccent: AccentTheme {
+        AccentTheme(rawValue: accentTheme) ?? .electricBlue
+    }
+    
     private var appearanceSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Picker("Theme", selection: $appTheme) {
-                Text("System").tag(0)
-                Text("Light").tag(1)
-                Text("Dark").tag(2)
+        VStack(alignment: .leading, spacing: 32) {
+            // Theme Picker
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Theme")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(.vitalzSecondaryText)
+                
+                Picker("Theme", selection: $appTheme) {
+                    Text("System").tag(0)
+                    Text("Light").tag(1)
+                    Text("Dark").tag(2)
+                }
+                .pickerStyle(.segmented)
+                .padding(16)
+                .background(Color.vitalzCard)
+                .cornerRadius(16)
             }
-            .pickerStyle(.segmented)
-            .padding(16)
-            .background(Color.vitalzCard)
-            .cornerRadius(16)
+            
+            // Accent Color Picker
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Accent Color")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(.vitalzSecondaryText)
+                
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
+                    ForEach(AccentTheme.allCases) { theme in
+                        Button {
+                            withAnimation(.spring(response: 0.3)) {
+                                accentTheme = theme.rawValue
+                            }
+                        } label: {
+                            VStack(spacing: 8) {
+                                ZStack {
+                                    Circle()
+                                        .fill(theme.color)
+                                        .frame(width: 44, height: 44)
+                                    
+                                    if selectedAccent == theme {
+                                        Circle()
+                                            .stroke(Color.vitalzText, lineWidth: 2.5)
+                                            .frame(width: 52, height: 52)
+                                        
+                                        Image(systemName: "checkmark")
+                                            .font(.system(size: 14, weight: .bold))
+                                            .foregroundColor(.white)
+                                    }
+                                }
+                                
+                                Text(theme.rawValue.components(separatedBy: " ").first ?? theme.rawValue)
+                                    .font(.system(size: 10, weight: selectedAccent == theme ? .bold : .medium))
+                                    .foregroundColor(selectedAccent == theme ? .vitalzText : .vitalzSecondaryText)
+                            }
+                        }
+                    }
+                }
+                .padding(16)
+                .background(Color.vitalzCard)
+                .cornerRadius(16)
+            }
+            
+            // Card Color Legend
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Card Colors")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(.vitalzSecondaryText)
+                
+                Text("Cards are color-coded by category to help you scan your dashboard at a glance.")
+                    .font(.system(size: 12))
+                    .foregroundColor(.vitalzSecondaryText.opacity(0.7))
+                
+                VStack(spacing: 0) {
+                    ForEach([CardCategory.body, .time, .cosmos, .mind, .growth, .bonds], id: \.rawValue) { cat in
+                        HStack(spacing: 14) {
+                            Circle()
+                                .fill(cat.accentColor)
+                                .frame(width: 12, height: 12)
+                            
+                            Image(systemName: cat.icon)
+                                .font(.system(size: 14))
+                                .foregroundColor(cat.accentColor)
+                                .frame(width: 20)
+                            
+                            Text(cat.label)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.vitalzText)
+                            
+                            Spacer()
+                            
+                            Text(categoryDescription(cat))
+                                .font(.system(size: 12))
+                                .foregroundColor(.vitalzSecondaryText)
+                        }
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 16)
+                        
+                        if cat != .bonds {
+                            Divider()
+                                .background(Color.vitalzDivider)
+                                .padding(.leading, 56)
+                        }
+                    }
+                }
+                .background(Color.vitalzCard)
+                .cornerRadius(16)
+            }
+        }
+    }
+    
+    private func categoryDescription(_ cat: CardCategory) -> String {
+        switch cat {
+        case .body: return "Heart, breath, blinks"
+        case .time: return "Seconds, sleep, sunsets"
+        case .cosmos: return "Space, moons, planets"
+        case .mind: return "Screen, coffee, reading"
+        case .growth: return "Passion, mastery"
+        case .bonds: return "Shared experiences"
         }
     }
 

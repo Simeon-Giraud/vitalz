@@ -398,34 +398,32 @@ public struct DashboardView: View {
         return String(format: "%.1fB", b)
     }
     
+    private func cardColor(_ id: CardData.ID) -> Color { id.category.cardColor }
+    private func cardAccent(_ id: CardData.ID) -> Color { id.category.accentColor }
+    private func cardValue(_ id: CardData.ID) -> Color { id.category.valueColor }
+    
     private func generateCards(from stats: LifeStats, profile: VitalzProfile) -> [CardData] {
         let ascendingData: [CGFloat] = [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-        let yellowColor = Color(red: 0.2, green: 0.15, blue: 0.05)
-        let redColor = Color(red: 0.2, green: 0.05, blue: 0.08)
-        let purpleColor = Color(red: 0.1, green: 0.05, blue: 0.2)
-        let blueColor = Color(red: 0.05, green: 0.1, blue: 0.2)
-        let greenColor = Color(red: 0.04, green: 0.16, blue: 0.1)
-        let tealColor = Color(red: 0.03, green: 0.14, blue: 0.16)
         
         var cards = [
-            CardData(id: .secondsAlive, title: "Seconds Alive", value: formatLargeNumber(stats.totalSecondsAlive), subtitle: "and counting...", chartData: ascendingData, icon: "stopwatch", color: yellowColor, accentColor: .yellow, valueColor: .yellow, isFullWidth: true),
-            CardData(id: .heartbeats, title: "Heartbeats", value: formatMillions(stats.estimatedTotalHeartbeats), subtitle: "@ 70 bpm", chartData: ascendingData, icon: "heart", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)),
-            CardData(id: .breathsTaken, title: "Breaths Taken", value: formatMillions(stats.estimatedBreathsTaken), subtitle: "@ 16/min", chartData: ascendingData, icon: "wind", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)),
-            CardData(id: .timesBlinked, title: "Times Blinked", value: formatMillions(stats.estimatedBlinks), subtitle: "while awake", chartData: ascendingData, icon: "eye", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)),
-            CardData(id: .hairGrowth, title: "Hair Growth", value: formattedLength(meters: stats.hairGrowthMeters), subtitle: "of hair grown", chartData: ascendingData, icon: "scissors", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)),
-            CardData(id: .spaceTraveler, title: "Space Traveler", value: formattedDistance(kilometers: stats.distanceTraveledSpaceKm), subtitle: useMetricUnits ? "km around Sun" : "mi around Sun", chartData: ascendingData, icon: "location.north.fill", color: purpleColor, accentColor: .blue, valueColor: .white),
-            CardData(id: .fullMoons, title: "Full Moons", value: formatLargeNumber(stats.fullMoonsWitnessed), subtitle: "witnessed", chartData: ascendingData, icon: "moon", color: purpleColor, accentColor: .blue, valueColor: .white),
-            CardData(id: .jupiterAge, title: "Jupiter Age", value: formatDouble(stats.jupiterAge, decimals: 2), subtitle: "years on Jupiter", chartData: ascendingData, icon: "globe", color: purpleColor, accentColor: .blue, valueColor: .white),
-            CardData(id: .sleep, title: "Sleep", value: formatDouble(stats.estimatedHoursSlept / 24.0 / 365.25) + " yrs", subtitle: "spent dreaming", chartData: ascendingData, icon: "moon.zzz", color: blueColor, accentColor: .blue, valueColor: .white),
-            CardData(id: .phoneVoid, title: "Phone Void", value: formatDouble(stats.phoneVoidYears) + " yrs", subtitle: "lost to screens", chartData: ascendingData, icon: "iphone", color: blueColor, accentColor: .blue, valueColor: .white),
-            CardData(id: .caffeineRiver, title: "Caffeine River", value: formatLargeNumber(stats.caffeineRiverLiters) + "L", subtitle: "of coffee", chartData: ascendingData, icon: "cup.and.saucer", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6))
+            CardData(id: .secondsAlive, title: "Seconds Alive", value: formatLargeNumber(stats.totalSecondsAlive), subtitle: "and counting...", chartData: ascendingData, icon: "stopwatch", color: cardColor(.secondsAlive), accentColor: cardAccent(.secondsAlive), valueColor: cardValue(.secondsAlive), isFullWidth: true),
+            CardData(id: .heartbeats, title: "Heartbeats", value: formatMillions(stats.estimatedTotalHeartbeats), subtitle: "@ 70 bpm", chartData: ascendingData, icon: "heart", color: cardColor(.heartbeats), accentColor: cardAccent(.heartbeats), valueColor: cardValue(.heartbeats)),
+            CardData(id: .breathsTaken, title: "Breaths Taken", value: formatMillions(stats.estimatedBreathsTaken), subtitle: "@ 16/min", chartData: ascendingData, icon: "wind", color: cardColor(.breathsTaken), accentColor: cardAccent(.breathsTaken), valueColor: cardValue(.breathsTaken)),
+            CardData(id: .timesBlinked, title: "Times Blinked", value: formatMillions(stats.estimatedBlinks), subtitle: "while awake", chartData: ascendingData, icon: "eye", color: cardColor(.timesBlinked), accentColor: cardAccent(.timesBlinked), valueColor: cardValue(.timesBlinked)),
+            CardData(id: .hairGrowth, title: "Hair Growth", value: formattedLength(meters: stats.hairGrowthMeters), subtitle: "of hair grown", chartData: ascendingData, icon: "scissors", color: cardColor(.hairGrowth), accentColor: cardAccent(.hairGrowth), valueColor: cardValue(.hairGrowth)),
+            CardData(id: .spaceTraveler, title: "Space Traveler", value: formattedDistance(kilometers: stats.distanceTraveledSpaceKm), subtitle: useMetricUnits ? "km around Sun" : "mi around Sun", chartData: ascendingData, icon: "location.north.fill", color: cardColor(.spaceTraveler), accentColor: cardAccent(.spaceTraveler), valueColor: cardValue(.spaceTraveler)),
+            CardData(id: .fullMoons, title: "Full Moons", value: formatLargeNumber(stats.fullMoonsWitnessed), subtitle: "witnessed", chartData: ascendingData, icon: "moon", color: cardColor(.fullMoons), accentColor: cardAccent(.fullMoons), valueColor: cardValue(.fullMoons)),
+            CardData(id: .jupiterAge, title: "Jupiter Age", value: formatDouble(stats.jupiterAge, decimals: 2), subtitle: "years on Jupiter", chartData: ascendingData, icon: "globe", color: cardColor(.jupiterAge), accentColor: cardAccent(.jupiterAge), valueColor: cardValue(.jupiterAge)),
+            CardData(id: .sleep, title: "Sleep", value: formatDouble(stats.estimatedHoursSlept / 24.0 / 365.25) + " yrs", subtitle: "spent dreaming", chartData: ascendingData, icon: "moon.zzz", color: cardColor(.sleep), accentColor: cardAccent(.sleep), valueColor: cardValue(.sleep)),
+            CardData(id: .phoneVoid, title: "Phone Void", value: formatDouble(stats.phoneVoidYears) + " yrs", subtitle: "lost to screens", chartData: ascendingData, icon: "iphone", color: cardColor(.phoneVoid), accentColor: cardAccent(.phoneVoid), valueColor: cardValue(.phoneVoid)),
+            CardData(id: .caffeineRiver, title: "Caffeine River", value: formatLargeNumber(stats.caffeineRiverLiters) + "L", subtitle: "of coffee", chartData: ascendingData, icon: "cup.and.saucer", color: cardColor(.caffeineRiver), accentColor: cardAccent(.caffeineRiver), valueColor: cardValue(.caffeineRiver))
         ]
 
         let hasBirthContext = profile.birthTimeTimestamp != nil || !profile.birthCity.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         if hasBirthContext {
             let city = profile.birthCity.trimmingCharacters(in: .whitespacesAndNewlines)
             let subtitle = city.isEmpty ? "estimated since birth" : "estimated in \(city)"
-            cards.append(CardData(id: .sunsets, title: "Sunsets", value: formatLargeNumber(stats.totalDaysAlive), subtitle: subtitle, chartData: ascendingData, icon: "sunset", color: yellowColor, accentColor: .orange, valueColor: .yellow))
+            cards.append(CardData(id: .sunsets, title: "Sunsets", value: formatLargeNumber(stats.totalDaysAlive), subtitle: subtitle, chartData: ascendingData, icon: "sunset", color: cardColor(.sunsets), accentColor: cardAccent(.sunsets), valueColor: cardValue(.sunsets)))
         }
 
         if let passionStartDate = profile.passionStartDate {
@@ -435,8 +433,8 @@ public struct DashboardView: View {
             let passionSubtitle = passionTitle.isEmpty ? "of this era" : "as \(passionTitle)"
             let estimatedHours = max(0, Int((Double(passionDays) / 7.0) * profile.passionHoursPerWeek))
 
-            cards.append(CardData(id: .passionEra, title: "Era Share", value: formatDouble(eraPercentage) + "%", subtitle: passionSubtitle, chartData: ascendingData, icon: "sparkles", color: greenColor, accentColor: .green, valueColor: .white))
-            cards.append(CardData(id: .masteryHours, title: "Mastery", value: formatLargeNumber(estimatedHours) + "h", subtitle: "toward 10,000 hours", chartData: ascendingData, icon: "target", color: greenColor, accentColor: .green, valueColor: .white))
+            cards.append(CardData(id: .passionEra, title: "Era Share", value: formatDouble(eraPercentage) + "%", subtitle: passionSubtitle, chartData: ascendingData, icon: "sparkles", color: cardColor(.passionEra), accentColor: cardAccent(.passionEra), valueColor: cardValue(.passionEra)))
+            cards.append(CardData(id: .masteryHours, title: "Mastery", value: formatLargeNumber(estimatedHours) + "h", subtitle: "toward 10,000 hours", chartData: ascendingData, icon: "target", color: cardColor(.masteryHours), accentColor: cardAccent(.masteryHours), valueColor: cardValue(.masteryHours)))
         }
 
         if let metDate = profile.favoritePersonMetDate {
@@ -446,21 +444,21 @@ public struct DashboardView: View {
             let personName = profile.favoritePersonName.trimmingCharacters(in: .whitespacesAndNewlines)
             let personSubtitle = personName.isEmpty ? "together on Earth" : "with \(personName)"
 
-            cards.append(CardData(id: .sharedDays, title: "Shared Days", value: formatLargeNumber(sharedDays), subtitle: personSubtitle, chartData: ascendingData, icon: "person.2.fill", color: tealColor, accentColor: .cyan, valueColor: .white))
-            cards.append(CardData(id: .sharedHeartbeats, title: "Shared Beats", value: formatMillions(sharedHeartbeats), subtitle: "combined since meeting", chartData: ascendingData, icon: "heart.text.square", color: tealColor, accentColor: .cyan, valueColor: .white))
+            cards.append(CardData(id: .sharedDays, title: "Shared Days", value: formatLargeNumber(sharedDays), subtitle: personSubtitle, chartData: ascendingData, icon: "person.2.fill", color: cardColor(.sharedDays), accentColor: cardAccent(.sharedDays), valueColor: cardValue(.sharedDays)))
+            cards.append(CardData(id: .sharedHeartbeats, title: "Shared Beats", value: formatMillions(sharedHeartbeats), subtitle: "combined since meeting", chartData: ascendingData, icon: "heart.text.square", color: cardColor(.sharedHeartbeats), accentColor: cardAccent(.sharedHeartbeats), valueColor: cardValue(.sharedHeartbeats)))
         }
 
         if let heightCentimeters = profile.heightCentimeters, heightCentimeters > 0 {
             let nailGrowthMeters = Double(stats.totalDaysAlive) * 0.0001 * 20.0
             let bodyHeights = nailGrowthMeters / (heightCentimeters / 100.0)
-            cards.append(CardData(id: .nailGrowth, title: "Nail Growth", value: formattedLength(meters: nailGrowthMeters), subtitle: "\(formatDouble(bodyHeights)) body heights", chartData: ascendingData, icon: "hand.raised", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)))
+            cards.append(CardData(id: .nailGrowth, title: "Nail Growth", value: formattedLength(meters: nailGrowthMeters), subtitle: "\(formatDouble(bodyHeights)) body heights", chartData: ascendingData, icon: "hand.raised", color: cardColor(.nailGrowth), accentColor: cardAccent(.nailGrowth), valueColor: cardValue(.nailGrowth)))
         }
 
         if let readingSpeed = profile.readingSpeed {
             let readingStartDate = Calendar.current.date(byAdding: .year, value: 6, to: profile.dateOfBirth) ?? profile.dateOfBirth
             let readingDays = days(from: readingStartDate, to: currentDate)
             let estimatedWords = readingDays * readingSpeed.wordsPerMinute * 20
-            cards.append(CardData(id: .wordsRead, title: "Words Read", value: formatMillions(estimatedWords), subtitle: "\(readingSpeed.title.lowercased()) reading pace", chartData: ascendingData, icon: "book.pages", color: blueColor, accentColor: .blue, valueColor: .white))
+            cards.append(CardData(id: .wordsRead, title: "Words Read", value: formatMillions(estimatedWords), subtitle: "\(readingSpeed.title.lowercased()) reading pace", chartData: ascendingData, icon: "book.pages", color: cardColor(.wordsRead), accentColor: cardAccent(.wordsRead), valueColor: cardValue(.wordsRead)))
         }
 
         return cards
