@@ -453,8 +453,11 @@ struct ProfileEditorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    VitalzGlassButton(shape: .capsule, isProminent: false, action: { dismiss() }) {
-                        Text("Cancel")
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 26))
+                            .foregroundColor(.gray)
+                            .symbolRenderingMode(.hierarchical)
                     }
                 }
 

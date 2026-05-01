@@ -45,10 +45,12 @@ public struct DashboardView: View {
     @AppStorage("showHairGrowth") private var showHairGrowth: Bool = true
     @AppStorage("showSpaceTraveler") private var showSpaceTraveler: Bool = true
     @AppStorage("useMetricUnits") private var useMetricUnits: Bool = true
+    @AppStorage("cardOrder") private var cardOrder: String = ""
     
     @State private var currentDate = Date()
     @State private var stats: LifeStats? = nil
     @State private var showingSettings = false
+    @State private var showingRearrange = false
     
     @Namespace private var animation
     @State private var selectedCardID: CardData.ID? = nil
@@ -100,6 +102,13 @@ public struct DashboardView: View {
                         
                         Spacer()
                         
+                        VitalzGlassButton(shape: .circle, isProminent: false, action: { showingRearrange = true }) {
+                            Image(systemName: "arrow.up.arrow.down")
+                                .font(.system(size: 20))
+                                .foregroundColor(.vitalzText)
+                                .padding(12)
+                        }
+                        
                         VitalzGlassButton(shape: .circle, isProminent: false, action: { showingSettings = true }) {
                             Image(systemName: "gearshape")
                                 .font(.system(size: 20))
@@ -111,103 +120,24 @@ public struct DashboardView: View {
                     .padding(.top, 16)
                     
                     if let stats = stats {
-                        let allCards = generateCards(from: stats, profile: profileStore.selectedProfile)
-                        let topCard = visibleTopCard(from: allCards)
-                        let middleCards = visibleCards(matching: activeMiddleCardIDs, from: allCards)
-                        let bottomCards = visibleCards(matching: activeBottomCardIDs, from: allCards)
-                        let percentageLived = stats.percentageOf80YearLifeExpectancy
+                        let elements = generateElements(from: stats, profile: profileStore.selectedProfile)
+                        let rows = chunkElements(elements)
                         
                         VStack(spacing: 16) {
-                            if let top = topCard {
-                                Button(action: { selectCard(top) }) {
-                                    GridCardView(card: top, animation: animation, isSelected: selectedCardID == top.id)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            
-                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                                ForEach(middleCards) { card in
-                                    Button(action: { selectCard(card) }) {
-                                        GridCardView(card: card, animation: animation, isSelected: selectedCardID == card.id)
+                            ForEach(rows) { row in
+                                switch row {
+                                case .fullWidth(let element):
+                                    renderElement(element, percentageLived: stats.percentageOf80YearLifeExpectancy)
+                                case .split(let e1, let e2):
+                                    HStack(spacing: 16) {
+                                        renderElement(e1, percentageLived: stats.percentageOf80YearLifeExpectancy)
+                                        if let e2 = e2 {
+                                            renderElement(e2, percentageLived: stats.percentageOf80YearLifeExpectancy)
+                                        } else {
+                                            Color.clear
+                                                .frame(maxWidth: .infinity)
+                                        }
                                     }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                            
-                            // Ad Space Mockup
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    Text("SPONSORED")
-                                        .font(.system(size: 11, weight: .semibold))
-                                        .foregroundColor(.vitalzSecondaryText)
-                                        .kerning(1.2)
-                                    Spacer()
-                                    Image(systemName: "arrow.up.right.square")
-                                        .foregroundColor(.vitalzSecondaryText)
-                                }
-                                
-                                Text("Your brand could be here")
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(.vitalzText)
-                                
-                                Text("Reach mindful users tracking their life stats")
-                                    .font(.system(size: 15, weight: .regular))
-                                    .foregroundColor(.vitalzSecondaryText)
-                                
-                                Spacer(minLength: 20)
-                                Text("ads@vitalz.app")
-                                    .font(.system(size: 13))
-                                    .foregroundColor(.vitalzSecondaryText.opacity(0.7))
-                            }
-                            .padding(24)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.vitalzCard)
-                            .cornerRadius(24)
-                            
-                            // Life Loading Bar
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    Text("Life Loading")
-                                        .font(.system(size: 15))
-                                        .foregroundColor(.vitalzSecondaryText)
-                                    Spacer()
-                                    Image(systemName: "sun.max.fill")
-                                        .foregroundColor(.vitalzSecondaryText)
-                                }
-                                
-                                GeometryReader { geo in
-                                    ZStack(alignment: .leading) {
-                                        Capsule()
-                                            .fill(Color.vitalzControl)
-                                            .frame(height: 12)
-                                        
-                                        Capsule()
-                                            .fill(Color.green.opacity(0.8))
-                                            .frame(width: geo.size.width * CGFloat(percentageLived / 100.0), height: 12)
-                                    }
-                                }
-                                .frame(height: 12)
-                                
-                                HStack {
-                                    Text("Life Completed")
-                                        .font(.system(size: 15))
-                                        .foregroundColor(.vitalzSecondaryText)
-                                    Spacer()
-                                    Text(String(format: "%.1f%%", percentageLived))
-                                        .font(.system(size: 18, weight: .bold))
-                                        .foregroundColor(.vitalzText)
-                                }
-                            }
-                            .padding(24)
-                            .background(Color.vitalzCard)
-                            .cornerRadius(24)
-                            
-                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                                ForEach(bottomCards) { card in
-                                    Button(action: { selectCard(card) }) {
-                                        GridCardView(card: card, animation: animation, isSelected: selectedCardID == card.id)
-                                    }
-                                    .buttonStyle(.plain)
                                 }
                             }
                         }
@@ -237,6 +167,9 @@ public struct DashboardView: View {
         .sheet(isPresented: $showingSettings) {
             SettingsView()
         }
+        .sheet(isPresented: $showingRearrange) {
+            RearrangeCardsView()
+        }
         .onAppear { updateStats(for: currentDate) }
         .onChange(of: profileStore.selectedProfileID) { _ in updateStats(for: currentDate) }
         .onChange(of: profileStore.selectedProfile.dateOfBirthTimestamp) { _ in updateStats(for: currentDate) }
@@ -246,40 +179,164 @@ public struct DashboardView: View {
         }
     }
     
-    private var activeMiddleCardIDs: [CardData.ID] {
-        [
-            showHeartbeats ? .heartbeats : nil,
-            showBreathsTaken ? .breathsTaken : nil,
-            showTimesBlinked ? .timesBlinked : nil,
-            showHairGrowth ? .hairGrowth : nil
-        ].compactMap { $0 }
+    private var activeCardIDs: [CardData.ID] {
+        var ids: [CardData.ID] = []
+        if showSecondsAlive { ids.append(.secondsAlive) }
+        if showHeartbeats { ids.append(.heartbeats) }
+        if showBreathsTaken { ids.append(.breathsTaken) }
+        if showTimesBlinked { ids.append(.timesBlinked) }
+        if showHairGrowth { ids.append(.hairGrowth) }
+        if showSpaceTraveler { ids.append(.spaceTraveler) }
+        
+        ids.append(contentsOf: [
+            .fullMoons, .jupiterAge, .sleep, .phoneVoid, .caffeineRiver,
+            .sunsets, .passionEra, .masteryHours, .sharedDays,
+            .sharedHeartbeats, .nailGrowth, .wordsRead
+        ])
+        
+        return ids
     }
-
-    private var activeBottomCardIDs: [CardData.ID] {
-        let defaultIDs: [CardData.ID] = [
-            .fullMoons,
-            .jupiterAge,
-            .sleep,
-            .phoneVoid,
-            .caffeineRiver,
-            .sunsets,
-            .passionEra,
-            .masteryHours,
-            .sharedDays,
-            .sharedHeartbeats,
-            .nailGrowth,
-            .wordsRead
-        ]
-        return showSpaceTraveler ? [.spaceTraveler] + defaultIDs : defaultIDs
+    
+    private let defaultCardOrder = [
+        "secondsAlive", "heartbeats", "breathsTaken", "timesBlinked", "hairGrowth",
+        "adSpace", "lifeLoading", "spaceTraveler", "fullMoons", "jupiterAge", "sleep",
+        "phoneVoid", "caffeineRiver", "sunsets", "passionEra", "masteryHours",
+        "sharedDays", "sharedHeartbeats", "nailGrowth", "wordsRead"
+    ]
+    
+    private func generateElements(from stats: LifeStats, profile: VitalzProfile) -> [DashboardElement] {
+        let allCards = generateCards(from: stats, profile: profile)
+        let activeIDs = activeCardIDs
+        
+        var elements: [DashboardElement] = []
+        
+        let orderString = cardOrder.isEmpty ? defaultCardOrder.joined(separator: ",") : cardOrder
+        let order = orderString.components(separatedBy: ",")
+        
+        for idString in order {
+            if idString == "adSpace" {
+                elements.append(.adSpace)
+                continue
+            }
+            if idString == "lifeLoading" {
+                elements.append(.lifeLoading)
+                continue
+            }
+            if let cardID = CardData.ID(rawValue: idString),
+               activeIDs.contains(cardID),
+               let card = allCards.first(where: { $0.id == cardID }) {
+                elements.append(.card(card))
+            }
+        }
+        
+        return elements
     }
-
-    private func visibleTopCard(from cards: [CardData]) -> CardData? {
-        guard showSecondsAlive else { return nil }
-        return cards.first { $0.id == .secondsAlive }
+    
+    private func chunkElements(_ elements: [DashboardElement]) -> [DashboardRow] {
+        var rows: [DashboardRow] = []
+        var pendingSplit: DashboardElement? = nil
+        
+        for element in elements {
+            if element.isFullWidth {
+                if let p = pendingSplit {
+                    rows.append(.split(p, nil))
+                    pendingSplit = nil
+                }
+                rows.append(.fullWidth(element))
+            } else {
+                if let p = pendingSplit {
+                    rows.append(.split(p, element))
+                    pendingSplit = nil
+                } else {
+                    pendingSplit = element
+                }
+            }
+        }
+        
+        if let p = pendingSplit {
+            rows.append(.split(p, nil))
+        }
+        
+        return rows
     }
-
-    private func visibleCards(matching ids: [CardData.ID], from cards: [CardData]) -> [CardData] {
-        cards.filter { ids.contains($0.id) }
+    
+    @ViewBuilder
+    private func renderElement(_ element: DashboardElement, percentageLived: Double) -> some View {
+        switch element {
+        case .card(let card):
+            Button(action: { selectCard(card) }) {
+                GridCardView(card: card, animation: animation, isSelected: selectedCardID == card.id)
+            }
+            .buttonStyle(.plain)
+            
+        case .adSpace:
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("SPONSORED")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.vitalzSecondaryText)
+                        .kerning(1.2)
+                    Spacer()
+                    Image(systemName: "arrow.up.right.square")
+                        .foregroundColor(.vitalzSecondaryText)
+                }
+                
+                Text("Your brand could be here")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.vitalzText)
+                
+                Text("Reach mindful users tracking their life stats")
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundColor(.vitalzSecondaryText)
+                
+                Spacer(minLength: 20)
+                Text("ads@vitalz.app")
+                    .font(.system(size: 13))
+                    .foregroundColor(.vitalzSecondaryText.opacity(0.7))
+            }
+            .padding(24)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.vitalzCard)
+            .cornerRadius(24)
+            
+        case .lifeLoading:
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Life Loading")
+                        .font(.system(size: 15))
+                        .foregroundColor(.vitalzSecondaryText)
+                    Spacer()
+                    Image(systemName: "sun.max.fill")
+                        .foregroundColor(.vitalzSecondaryText)
+                }
+                
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Color.vitalzControl)
+                            .frame(height: 12)
+                        
+                        Capsule()
+                            .fill(Color.green.opacity(0.8))
+                            .frame(width: geo.size.width * CGFloat(percentageLived / 100.0), height: 12)
+                    }
+                }
+                .frame(height: 12)
+                
+                HStack {
+                    Text("Life Completed")
+                        .font(.system(size: 15))
+                        .foregroundColor(.vitalzSecondaryText)
+                    Spacer()
+                    Text(String(format: "%.1f%%", percentageLived))
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.vitalzText)
+                }
+            }
+            .padding(24)
+            .background(Color.vitalzCard)
+            .cornerRadius(24)
+        }
     }
 
     private func selectCard(_ card: CardData) {
@@ -408,6 +465,41 @@ public struct DashboardView: View {
         }
 
         return formatDouble(meters * 3.28084) + "ft"
+    }
+}
+
+// MARK: - Layout Models
+
+enum DashboardElement: Identifiable {
+    case card(CardData)
+    case adSpace
+    case lifeLoading
+    
+    var id: String {
+        switch self {
+        case .card(let c): return c.id.rawValue
+        case .adSpace: return "adSpace"
+        case .lifeLoading: return "lifeLoading"
+        }
+    }
+    
+    var isFullWidth: Bool {
+        switch self {
+        case .card(let c): return c.isFullWidth
+        case .adSpace, .lifeLoading: return true
+        }
+    }
+}
+
+enum DashboardRow: Identifiable {
+    case fullWidth(DashboardElement)
+    case split(DashboardElement, DashboardElement?)
+    
+    var id: String {
+        switch self {
+        case .fullWidth(let e): return e.id
+        case .split(let e1, let e2): return e1.id + (e2?.id ?? "")
+        }
     }
 }
 
