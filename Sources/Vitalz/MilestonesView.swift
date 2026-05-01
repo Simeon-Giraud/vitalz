@@ -2,7 +2,7 @@ import SwiftUI
 import UserNotifications
 
 public struct MilestonesView: View {
-    @AppStorage("userDOBTimestamp") private var userDOBTimestamp: Double = 0
+    @EnvironmentObject private var profileStore: ProfileStore
     @StateObject private var notificationManager = NotificationManager.shared
     
     // Updates UI dynamically around midnight or when left open
@@ -12,8 +12,7 @@ public struct MilestonesView: View {
     public init() {}
     
     public var body: some View {
-        let dob = Date(timeIntervalSince1970: userDOBTimestamp)
-        let math = LifeMath(dateOfBirth: dob)
+        let math = LifeMath(dateOfBirth: profileStore.selectedProfile.dateOfBirth)
         let milestones = math.calculateMilestones()
         
         ZStack {
@@ -254,4 +253,5 @@ struct DynamicMessageView: View {
 
 #Preview {
     MilestonesView()
+        .environmentObject(ProfileStore())
 }

@@ -1,61 +1,43 @@
+import PhotosUI
 import SwiftUI
+import UIKit
 
 public struct SettingsView: View {
+    @EnvironmentObject private var profileStore: ProfileStore
     @Environment(\.dismiss) private var dismiss
-    
+
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     @AppStorage("appTheme") private var appTheme: Int = 0 // 0: System, 1: Light, 2: Dark
-    
-    // Visibility Toggles
+
     @AppStorage("showSecondsAlive") private var showSecondsAlive: Bool = true
     @AppStorage("showHeartbeats") private var showHeartbeats: Bool = true
     @AppStorage("showBreathsTaken") private var showBreathsTaken: Bool = true
     @AppStorage("showTimesBlinked") private var showTimesBlinked: Bool = true
     @AppStorage("showHairGrowth") private var showHairGrowth: Bool = true
     @AppStorage("showSpaceTraveler") private var showSpaceTraveler: Bool = true
-    
-    @State private var selectedTab: Int = 1 // 0: Appearance, 1: Dashboard
-    
+
+    @State private var selectedTab = 1
+    @State private var editingProfile: VitalzProfile?
+    @State private var isAddingProfile = false
+
     public init() {}
-    
+
     public var body: some View {
         ZStack {
             Color.vitalzBackground.ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
-                // Header
-                HStack {
-                    Text("Settings")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.vitalzText)
-                    
-                    Spacer()
-                    
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.vitalzSecondaryText)
-                            .padding(10)
-                            .background(Color.vitalzControl)
-                            .clipShape(Circle())
-                    }
-                }
-                .padding(24)
-                
-                // Segmented Control
-                HStack(spacing: 8) {
-                    TabButton(title: "Appearance", isSelected: selectedTab == 0) { selectedTab = 0 }
-                    TabButton(title: "Dashboard", isSelected: selectedTab == 1) { selectedTab = 1 }
-                }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 16)
-                
+                header
+                tabs
+
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 32) {
                         if selectedTab == 0 {
                             appearanceSection
-                        } else {
+                        } else if selectedTab == 1 {
                             dashboardSection
+                        } else {
+                            profilesSection
                         }
                     }
                     .padding(24)
@@ -64,8 +46,46 @@ public struct SettingsView: View {
             }
         }
         .presentationDetents([.large])
+        .sheet(item: $editingProfile) { profile in
+            ProfileEditorView(profile: profile)
+                .environmentObject(profileStore)
+        }
+        .sheet(isPresented: $isAddingProfile) {
+            ProfileEditorView(profile: nil)
+                .environmentObject(profileStore)
+        }
     }
-    
+
+    private var header: some View {
+        HStack {
+            Text("Settings")
+                .font(.system(size: 28, weight: .bold))
+                .foregroundColor(.vitalzText)
+
+            Spacer()
+
+            Button(action: { dismiss() }) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.vitalzSecondaryText)
+                    .padding(10)
+                    .background(Color.vitalzControl)
+                    .clipShape(Circle())
+            }
+        }
+        .padding(24)
+    }
+
+    private var tabs: some View {
+        HStack(spacing: 8) {
+            TabButton(title: "Appearance", isSelected: selectedTab == 0) { selectedTab = 0 }
+            TabButton(title: "Dashboard", isSelected: selectedTab == 1) { selectedTab = 1 }
+            TabButton(title: "Profiles", isSelected: selectedTab == 2) { selectedTab = 2 }
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 16)
+    }
+
     private var appearanceSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Picker("Theme", selection: $appTheme) {
@@ -79,16 +99,16 @@ public struct SettingsView: View {
             .cornerRadius(16)
         }
     }
-    
+
     private var dashboardSection: some View {
         VStack(alignment: .leading, spacing: 32) {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Manage Visibility")
                     .font(.system(size: 14, weight: .regular))
                     .foregroundColor(.vitalzSecondaryText)
-                
+
                 VStack(spacing: 0) {
-                    ToggleRow(title: "Seconds Alive", isOn: $showSecondsAlive, isTop: true)
+                    ToggleRow(title: "Seconds Alive", isOn: $showSecondsAlive)
                     Divider().background(Color.vitalzDivider).padding(.leading, 56)
                     ToggleRow(title: "Heartbeats", isOn: $showHeartbeats)
                     Divider().background(Color.vitalzDivider).padding(.leading, 56)
@@ -98,19 +118,13 @@ public struct SettingsView: View {
                     Divider().background(Color.vitalzDivider).padding(.leading, 56)
                     ToggleRow(title: "Hair Growth", isOn: $showHairGrowth)
                     Divider().background(Color.vitalzDivider).padding(.leading, 56)
-                    ToggleRow(title: "Space Traveler", isOn: $showSpaceTraveler, isBottom: true)
+                    ToggleRow(title: "Space Traveler", isOn: $showSpaceTraveler)
                 }
                 .background(Color.vitalzCard)
                 .cornerRadius(16)
             }
-            
-            Spacer().frame(height: 32)
-            
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.8)) {
-                    hasCompletedOnboarding = false
-                }
-            }) {
+
+            Button(action: resetIdentity) {
                 Text("Reset Identity")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.red)
@@ -121,13 +135,217 @@ public struct SettingsView: View {
             }
         }
     }
+
+    private var profilesSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("People")
+                .font(.system(size: 14, weight: .regular))
+                .foregroundColor(.vitalzSecondaryText)
+
+            VStack(spacing: 0) {
+                ForEach(profileStore.profiles) { profile in
+                    ProfileRow(
+                        profile: profile,
+                        isSelected: profile.id == profileStore.selectedProfileID,
+                        canDelete: profileStore.profiles.count > 1,
+                        onSelect: { profileStore.selectProfile(id: profile.id) },
+                        onEdit: { editingProfile = profile },
+                        onDelete: { profileStore.deleteProfile(id: profile.id) }
+                    )
+
+                    if profile.id != profileStore.profiles.last?.id {
+                        Divider().background(Color.vitalzDivider).padding(.leading, 76)
+                    }
+                }
+            }
+            .background(Color.vitalzCard)
+            .cornerRadius(16)
+
+            Button(action: { isAddingProfile = true }) {
+                HStack(spacing: 12) {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Add Profile")
+                    Spacer()
+                }
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.vitalzBlue)
+                .padding(16)
+                .background(Color.vitalzCard)
+                .cornerRadius(16)
+            }
+        }
+    }
+
+    private func resetIdentity() {
+        withAnimation(.easeInOut(duration: 0.8)) {
+            hasCompletedOnboarding = false
+        }
+    }
+}
+
+struct ProfileRow: View {
+    let profile: VitalzProfile
+    let isSelected: Bool
+    let canDelete: Bool
+    let onSelect: () -> Void
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Button(action: onSelect) {
+                HStack(spacing: 14) {
+                    ProfileAvatarView(imageData: profile.imageData, size: 48)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(profile.name)
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.vitalzText)
+
+                        Text("Born \(formattedDate(profile.dateOfBirth))")
+                            .font(.system(size: 13))
+                            .foregroundColor(.vitalzSecondaryText)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(isSelected ? .vitalzBlue : .vitalzSecondaryText)
+                }
+            }
+            .buttonStyle(.plain)
+
+            Menu {
+                Button("Edit", action: onEdit)
+
+                if canDelete {
+                    Button("Delete", role: .destructive, action: onDelete)
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .font(.system(size: 22))
+                    .foregroundColor(.vitalzSecondaryText)
+            }
+        }
+        .padding(14)
+    }
+
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: date)
+    }
+}
+
+struct ProfileEditorView: View {
+    @EnvironmentObject private var profileStore: ProfileStore
+    @Environment(\.dismiss) private var dismiss
+
+    private let profile: VitalzProfile?
+
+    @State private var name: String
+    @State private var dateOfBirth: Date
+    @State private var imageData: Data?
+    @State private var selectedPhotoItem: PhotosPickerItem?
+
+    init(profile: VitalzProfile?) {
+        self.profile = profile
+        _name = State(initialValue: profile?.name ?? "Friend")
+        _dateOfBirth = State(initialValue: profile?.dateOfBirth ?? Calendar.current.date(byAdding: .year, value: -25, to: Date()) ?? Date())
+        _imageData = State(initialValue: profile?.imageData)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    HStack {
+                        Spacer()
+
+                        PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                            ZStack(alignment: .bottomTrailing) {
+                                ProfileAvatarView(imageData: imageData, size: 96)
+
+                                Image(systemName: "camera.fill")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(Color.vitalzBlue)
+                                    .clipShape(Circle())
+                            }
+                        }
+
+                        Spacer()
+                    }
+                    .padding(.vertical, 12)
+                }
+
+                Section {
+                    TextField("Name", text: $name)
+                    DatePicker("Birthday", selection: $dateOfBirth, in: ...Date(), displayedComponents: [.date])
+                }
+
+                if imageData != nil {
+                    Section {
+                        Button("Remove Photo", role: .destructive) {
+                            imageData = nil
+                        }
+                    }
+                }
+            }
+            .navigationTitle(profile == nil ? "Add Profile" : "Edit Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save", action: save)
+                }
+            }
+            .task(id: selectedPhotoItem) {
+                await loadSelectedPhoto()
+            }
+        }
+    }
+
+    private func save() {
+        if let profile {
+            profileStore.updateProfile(
+                id: profile.id,
+                name: name,
+                dateOfBirth: dateOfBirth,
+                imageData: imageData
+            )
+        } else {
+            profileStore.addProfile(name: name, dateOfBirth: dateOfBirth, imageData: imageData)
+        }
+
+        dismiss()
+    }
+
+    private func loadSelectedPhoto() async {
+        guard let selectedPhotoItem,
+              let data = try? await selectedPhotoItem.loadTransferable(type: Data.self) else {
+            return
+        }
+
+        if let image = UIImage(data: data),
+           let compressedData = image.jpegData(compressionQuality: 0.75) {
+            imageData = compressedData
+        } else {
+            imageData = data
+        }
+    }
 }
 
 struct TabButton: View {
     let title: String
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             Text(title)
@@ -144,21 +362,19 @@ struct TabButton: View {
 struct ToggleRow: View {
     let title: String
     @Binding var isOn: Bool
-    var isTop: Bool = false
-    var isBottom: Bool = false
-    
+
     var body: some View {
         HStack(spacing: 16) {
             Image(systemName: "eye")
                 .foregroundColor(.blue)
                 .frame(width: 24)
-            
+
             Text(title)
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.vitalzText)
-            
+
             Spacer()
-            
+
             Toggle("", isOn: $isOn)
                 .labelsHidden()
                 .tint(.blue)
@@ -170,4 +386,5 @@ struct ToggleRow: View {
 
 #Preview {
     SettingsView()
+        .environmentObject(ProfileStore())
 }

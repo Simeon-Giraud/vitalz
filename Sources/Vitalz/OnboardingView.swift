@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct OnboardingView: View {
-    @AppStorage("userDOBTimestamp") private var userDOBTimestamp: Double = 0
+    @EnvironmentObject private var profileStore: ProfileStore
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     
     @State private var step: Int = 0
@@ -11,7 +11,7 @@ public struct OnboardingView: View {
     
     public var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color.vitalzBackground.ignoresSafeArea()
             
             Group {
                 if step == 0 {
@@ -24,13 +24,13 @@ public struct OnboardingView: View {
             }
             .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)))
         }
-        .tint(.white)
+        .tint(.vitalzBlue)
     }
     
     private var welcomeScreen: some View {
         VStack {
             Spacer()
-            Text("Welcome to Vitalz").font(.system(size: 34, weight: .bold, design: .serif)).foregroundColor(.white)
+            Text("Welcome to Vitalz").font(.system(size: 34, weight: .bold, design: .serif)).foregroundColor(.vitalzText)
             Spacer()
             glassButton("Continue") { withAnimation { step = 1 } }
         }
@@ -41,7 +41,7 @@ public struct OnboardingView: View {
             Spacer()
             Text("Every second of your life\ndeserves to be noticed.")
                 .font(.system(size: 26, weight: .regular, design: .serif))
-                .foregroundColor(.white)
+                .foregroundColor(.vitalzText)
                 .multilineTextAlignment(.center)
             Spacer()
             glassButton("Next") { withAnimation { step = 2 } }
@@ -50,7 +50,7 @@ public struct OnboardingView: View {
     
     private var datePickerScreen: some View {
         VStack {
-            Text("Select Date of Birth").foregroundColor(.gray)
+            Text("Select Date of Birth").foregroundColor(.vitalzSecondaryText)
             DatePicker("", selection: $selectedDate, in: ...Date(), displayedComponents: [.date])
                 .datePickerStyle(.graphical)
                 .padding()
@@ -64,23 +64,24 @@ public struct OnboardingView: View {
             Button(action: action) {
                 Text(title)
                     .font(.headline)
-                    .foregroundColor(.black)
+                    .foregroundStyle(Color.vitalzBackground)
                     .frame(maxWidth: .infinity)
                     .padding()
             }
             .buttonStyle(.glassProminent)
+            .tint(.vitalzText)
             .padding(.horizontal, 40)
         } else {
             Button(action: action) {
                 Text(title)
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(.vitalzBackground)
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.white.opacity(0.1))
-                            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.2), lineWidth: 1))
+                            .fill(Color.vitalzText)
+                            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.vitalzDivider, lineWidth: 1))
                     )
                     .padding(.horizontal, 40)
             }
@@ -88,7 +89,12 @@ public struct OnboardingView: View {
     }
     
     private func finishOnboarding() {
-        userDOBTimestamp = selectedDate.timeIntervalSince1970
+        profileStore.updateProfile(
+            id: profileStore.selectedProfile.id,
+            name: profileStore.selectedProfile.name,
+            dateOfBirth: selectedDate,
+            imageData: profileStore.selectedProfile.imageData
+        )
         
         // Trigger a smooth transition to the main app state
         withAnimation(.easeInOut(duration: 1.0)) {
@@ -99,4 +105,5 @@ public struct OnboardingView: View {
 
 #Preview {
     OnboardingView()
+        .environmentObject(ProfileStore())
 }

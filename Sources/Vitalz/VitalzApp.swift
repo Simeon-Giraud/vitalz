@@ -7,6 +7,8 @@ struct VitalzApp: App {
     
     // Theme preference: 0 = System, 1 = Light, 2 = Dark
     @AppStorage("appTheme") private var appTheme: Int = 0
+
+    @StateObject private var profileStore = ProfileStore()
     
     var body: some Scene {
         WindowGroup {
@@ -22,6 +24,7 @@ struct VitalzApp: App {
                         .transition(.opacity)
                 }
             }
+            .environmentObject(profileStore)
             .preferredColorScheme(selectedColorScheme)
             // Force animation on state change
             .animation(.easeInOut(duration: 0.8), value: hasCompletedOnboarding)

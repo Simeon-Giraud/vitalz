@@ -28,8 +28,7 @@ struct CardData: Identifiable {
 }
 
 public struct DashboardView: View {
-    @AppStorage("userDOBTimestamp") private var userDOBTimestamp: Double = 0
-    @AppStorage("userName") private var userName: String = "Me"
+    @EnvironmentObject private var profileStore: ProfileStore
     
     // Visibility Toggles
     @AppStorage("showSecondsAlive") private var showSecondsAlive: Bool = true
@@ -64,6 +63,8 @@ public struct DashboardView: View {
                 VStack(spacing: 20) {
                     // Header
                     HStack {
+                        ProfileAvatarView(imageData: profileStore.selectedProfile.imageData, size: 44)
+
                         VStack(alignment: .leading, spacing: 4) {
                             Text(userName)
                                 .font(.system(size: 16, weight: .semibold))
@@ -216,7 +217,8 @@ public struct DashboardView: View {
             SettingsView()
         }
         .onAppear { updateStats(for: currentDate) }
-        .onChange(of: userDOBTimestamp) { _ in updateStats(for: currentDate) }
+        .onChange(of: profileStore.selectedProfileID) { _ in updateStats(for: currentDate) }
+        .onChange(of: profileStore.selectedProfile.dateOfBirthTimestamp) { _ in updateStats(for: currentDate) }
         .onReceive(timer) { input in
             currentDate = input
             updateStats(for: input)
@@ -259,9 +261,12 @@ public struct DashboardView: View {
     }
     
     private func updateStats(for date: Date) {
-        let dob = Date(timeIntervalSince1970: userDOBTimestamp)
-        let math = LifeMath(dateOfBirth: dob)
+        let math = LifeMath(dateOfBirth: profileStore.selectedProfile.dateOfBirth)
         self.stats = math.calculateStats(upTo: date)
+    }
+
+    private var userName: String {
+        profileStore.selectedProfile.name
     }
     
     private func formatLargeNumber(_ number: Int) -> String {
@@ -455,8 +460,10 @@ struct ExpandedCardView: View {
 
 #Preview {
     DashboardView()
+        .environmentObject(ProfileStore())
 }
 
 #Preview {
     DashboardView()
+        .environmentObject(ProfileStore())
 }
