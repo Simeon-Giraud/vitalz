@@ -2,6 +2,7 @@ import SwiftUI
 
 public struct MainTabView: View {
     @State private var selectedTab = 0
+    @AppStorage("accentTheme") private var accentTheme: String = AccentTheme.electricBlue.rawValue
     
     public init() {}
     
@@ -21,7 +22,8 @@ public struct MainTabView: View {
                     Text("Milestones")
                 }
         }
-        .accentColor(.vitalzBlue)
+        .accentColor(Color.vitalzAccent)
+        .id(accentTheme) // Force view refresh when accent changes
         // Global configuration to force TabBar to match our pure black luxury aesthetic
         .onAppear {
             let appearance = UITabBarAppearance()

@@ -549,7 +549,7 @@ struct ProfileEditorView: View {
                                     .font(.system(size: 14, weight: .bold))
                                     .foregroundColor(.white)
                                     .padding(8)
-                                    .background(Color.vitalzBlue)
+                                    .background(Color.vitalzAccent)
                                     .clipShape(Circle())
                             }
                         }
@@ -735,7 +735,7 @@ struct ToggleRow: View {
     var body: some View {
         HStack(spacing: 16) {
             Image(systemName: "eye")
-                .foregroundColor(.blue)
+                .foregroundColor(.vitalzAccent)
                 .frame(width: 24)
 
             Text(title)
@@ -746,7 +746,7 @@ struct ToggleRow: View {
 
             Toggle("", isOn: $isOn)
                 .labelsHidden()
-                .tint(.blue)
+                .tint(.vitalzAccent)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)

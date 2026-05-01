@@ -578,7 +578,7 @@ struct GridCardView: View {
     var animation: Namespace.ID
     var isSelected: Bool
 
-    private let supportingTextColor = Color.white.opacity(0.65)
+    private let supportingTextColor = Color.vitalzSecondaryText
     
     var body: some View {
         ZStack {
@@ -675,7 +675,7 @@ struct ExpandedCardView: View {
                     let detail = card.id.detailContent
                     
                     VStack(spacing: 20) {
-                        Divider().background(Color.white.opacity(0.15)).padding(.vertical, 4)
+                        Divider().background(Color.vitalzDivider).padding(.vertical, 4)
                         
                         // Unique Visualization
                         HStack {
@@ -688,7 +688,7 @@ struct ExpandedCardView: View {
                         // Description
                         Text(detail.description)
                             .font(.system(size: 14, weight: .regular))
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundColor(.vitalzSecondaryText)
                             .lineSpacing(4)
                             .fixedSize(horizontal: false, vertical: true)
                         
@@ -697,11 +697,11 @@ struct ExpandedCardView: View {
                             ForEach(detail.comparisons, id: \.self) { comparison in
                                 Text(comparison)
                                     .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.6))
+                                    .foregroundColor(.vitalzText.opacity(0.8))
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 8)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(Color.white.opacity(0.06))
+                                    .background(Color.vitalzSecondaryText.opacity(0.1))
                                     .cornerRadius(10)
                             }
                         }
@@ -721,7 +721,7 @@ struct ExpandedCardView: View {
                             
                             Text(detail.funFact)
                                 .font(.system(size: 13, weight: .regular))
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundColor(.vitalzText.opacity(0.9))
                                 .lineSpacing(3)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -743,7 +743,7 @@ struct ExpandedCardView: View {
                             .padding()
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.white.opacity(0.1))
+                                    .fill(Color.vitalzAccent)
                             )
                         }
                     }
@@ -756,7 +756,7 @@ struct ExpandedCardView: View {
             RoundedRectangle(cornerRadius: 32)
                 .fill(card.color.opacity(0.95))
                 .matchedGeometryEffect(id: "bg\(card.id)", in: animation)
-                .shadow(color: .black.opacity(0.5), radius: 30, x: 0, y: 20)
+                .shadow(color: .vitalzShadow, radius: 30, x: 0, y: 20)
         )
         .onAppear {
             withAnimation(.easeOut(duration: 0.4).delay(0.25)) {

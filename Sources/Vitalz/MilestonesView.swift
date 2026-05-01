@@ -40,7 +40,7 @@ public struct MilestonesView: View {
                     HStack {
                         Text("VITAL MILESTONES")
                             .font(.system(size: 14, weight: .bold, design: .default))
-                            .foregroundColor(.vitalzBlue)
+                            .foregroundColor(.vitalzAccent)
                             .kerning(6)
                         Spacer()
                         
@@ -53,7 +53,7 @@ public struct MilestonesView: View {
                                 Text(notificationManager.hasPermission ? "Active" : "Alert Me")
                                     .font(.system(size: 12, weight: .bold))
                             }
-                            .foregroundColor(notificationManager.hasPermission ? .vitalzBlue : .vitalzSecondaryText)
+                            .foregroundColor(notificationManager.hasPermission ? .vitalzAccent : .vitalzSecondaryText)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(Color.vitalzCard)
@@ -219,7 +219,7 @@ struct NextMilestoneBanner: View {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text("\(daysLeft)")
                     .font(.system(size: 36, weight: .bold, design: .monospaced))
-                    .foregroundColor(.vitalzBlue)
+                    .foregroundColor(.vitalzAccent)
                 Text("days away")
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(.vitalzSecondaryText)
@@ -237,7 +237,7 @@ struct NextMilestoneBanner: View {
                 .fill(Color.vitalzCard)
                 .overlay(
                     RoundedRectangle(cornerRadius: 24)
-                        .stroke(Color.vitalzBlue.opacity(0.2), lineWidth: 1)
+                        .stroke(Color.vitalzAccent.opacity(0.2), lineWidth: 1)
                 )
         )
         .shadow(color: .vitalzShadow, radius: 15, x: 0, y: 10)
@@ -260,11 +260,11 @@ struct CategoryPill: View {
                 .padding(.vertical, 8)
                 .background(
                     Capsule()
-                        .fill(isSelected ? Color.vitalzBlue.opacity(0.3) : Color.vitalzCard)
+                        .fill(isSelected ? Color.vitalzAccent.opacity(0.3) : Color.vitalzCard)
                 )
                 .overlay(
                     Capsule()
-                        .stroke(isSelected ? Color.vitalzBlue.opacity(0.5) : Color.clear, lineWidth: 1)
+                        .stroke(isSelected ? Color.vitalzAccent.opacity(0.5) : Color.clear, lineWidth: 1)
                 )
         }
     }
