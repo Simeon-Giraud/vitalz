@@ -12,7 +12,7 @@ public struct MilestonesView: View {
     public init() {}
     
     public var body: some View {
-        let math = LifeMath(dateOfBirth: profileStore.selectedProfile.dateOfBirth)
+        let math = LifeMath(dateOfBirth: profileStore.selectedProfile.effectiveDateOfBirth)
         let milestones = math.calculateMilestones()
         
         ZStack {

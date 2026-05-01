@@ -13,6 +13,13 @@ struct CardData: Identifiable {
         case sleep
         case phoneVoid
         case caffeineRiver
+        case sunsets
+        case passionEra
+        case masteryHours
+        case sharedDays
+        case sharedHeartbeats
+        case nailGrowth
+        case wordsRead
     }
 
     let id: ID
@@ -90,7 +97,7 @@ public struct DashboardView: View {
                     .padding(.top, 16)
                     
                     if let stats = stats {
-                        let allCards = generateCards(from: stats)
+                        let allCards = generateCards(from: stats, profile: profileStore.selectedProfile)
                         let topCard = visibleTopCard(from: allCards)
                         let middleCards = visibleCards(matching: activeMiddleCardIDs, from: allCards)
                         let bottomCards = visibleCards(matching: activeBottomCardIDs, from: allCards)
@@ -201,7 +208,7 @@ public struct DashboardView: View {
             
             // Expanded Overlay
             if let selectedCardID,
-               let card = stats.map({ generateCards(from: $0) })?.first(where: { $0.id == selectedCardID }) {
+               let card = stats.map({ generateCards(from: $0, profile: profileStore.selectedProfile) })?.first(where: { $0.id == selectedCardID }) {
                 Color.black.opacity(0.7)
                     .ignoresSafeArea()
                     .onTapGesture(perform: closeCard)
@@ -235,7 +242,20 @@ public struct DashboardView: View {
     }
 
     private var activeBottomCardIDs: [CardData.ID] {
-        let defaultIDs: [CardData.ID] = [.fullMoons, .jupiterAge, .sleep, .phoneVoid, .caffeineRiver]
+        let defaultIDs: [CardData.ID] = [
+            .fullMoons,
+            .jupiterAge,
+            .sleep,
+            .phoneVoid,
+            .caffeineRiver,
+            .sunsets,
+            .passionEra,
+            .masteryHours,
+            .sharedDays,
+            .sharedHeartbeats,
+            .nailGrowth,
+            .wordsRead
+        ]
         return showSpaceTraveler ? [.spaceTraveler] + defaultIDs : defaultIDs
     }
 
@@ -261,7 +281,7 @@ public struct DashboardView: View {
     }
     
     private func updateStats(for date: Date) {
-        let math = LifeMath(dateOfBirth: profileStore.selectedProfile.dateOfBirth)
+        let math = LifeMath(dateOfBirth: profileStore.selectedProfile.effectiveDateOfBirth)
         self.stats = math.calculateStats(upTo: date)
     }
 
@@ -287,14 +307,16 @@ public struct DashboardView: View {
         return String(format: "%.1fB", b)
     }
     
-    private func generateCards(from stats: LifeStats) -> [CardData] {
+    private func generateCards(from stats: LifeStats, profile: VitalzProfile) -> [CardData] {
         let ascendingData: [CGFloat] = [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
         let yellowColor = Color(red: 0.2, green: 0.15, blue: 0.05)
         let redColor = Color(red: 0.2, green: 0.05, blue: 0.08)
         let purpleColor = Color(red: 0.1, green: 0.05, blue: 0.2)
         let blueColor = Color(red: 0.05, green: 0.1, blue: 0.2)
+        let greenColor = Color(red: 0.04, green: 0.16, blue: 0.1)
+        let tealColor = Color(red: 0.03, green: 0.14, blue: 0.16)
         
-        return [
+        var cards = [
             CardData(id: .secondsAlive, title: "Seconds Alive", value: formatLargeNumber(stats.totalSecondsAlive), subtitle: "and counting...", chartData: ascendingData, icon: "stopwatch", color: yellowColor, accentColor: .yellow, valueColor: .yellow, isFullWidth: true),
             CardData(id: .heartbeats, title: "Heartbeats", value: formatMillions(stats.estimatedTotalHeartbeats), subtitle: "@ 70 bpm", chartData: ascendingData, icon: "heart", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)),
             CardData(id: .breathsTaken, title: "Breaths Taken", value: formatMillions(stats.estimatedBreathsTaken), subtitle: "@ 16/min", chartData: ascendingData, icon: "wind", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)),
@@ -307,6 +329,54 @@ public struct DashboardView: View {
             CardData(id: .phoneVoid, title: "Phone Void", value: formatDouble(stats.phoneVoidYears) + " yrs", subtitle: "lost to screens", chartData: ascendingData, icon: "iphone", color: blueColor, accentColor: .blue, valueColor: .white),
             CardData(id: .caffeineRiver, title: "Caffeine River", value: formatLargeNumber(stats.caffeineRiverLiters) + "L", subtitle: "of coffee", chartData: ascendingData, icon: "cup.and.saucer", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6))
         ]
+
+        let hasBirthContext = profile.birthTimeTimestamp != nil || !profile.birthCity.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        if hasBirthContext {
+            let city = profile.birthCity.trimmingCharacters(in: .whitespacesAndNewlines)
+            let subtitle = city.isEmpty ? "estimated since birth" : "estimated in \(city)"
+            cards.append(CardData(id: .sunsets, title: "Sunsets", value: formatLargeNumber(stats.totalDaysAlive), subtitle: subtitle, chartData: ascendingData, icon: "sunset", color: yellowColor, accentColor: .orange, valueColor: .yellow))
+        }
+
+        if let passionStartDate = profile.passionStartDate {
+            let passionDays = days(from: passionStartDate, to: currentDate)
+            let eraPercentage = stats.totalDaysAlive > 0 ? (Double(passionDays) / Double(stats.totalDaysAlive)) * 100 : 0
+            let passionTitle = profile.passionTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+            let passionSubtitle = passionTitle.isEmpty ? "of this era" : "as \(passionTitle)"
+            let estimatedHours = max(0, Int((Double(passionDays) / 7.0) * profile.passionHoursPerWeek))
+
+            cards.append(CardData(id: .passionEra, title: "Era Share", value: formatDouble(eraPercentage) + "%", subtitle: passionSubtitle, chartData: ascendingData, icon: "sparkles", color: greenColor, accentColor: .green, valueColor: .white))
+            cards.append(CardData(id: .masteryHours, title: "Mastery", value: formatLargeNumber(estimatedHours) + "h", subtitle: "toward 10,000 hours", chartData: ascendingData, icon: "target", color: greenColor, accentColor: .green, valueColor: .white))
+        }
+
+        if let metDate = profile.favoritePersonMetDate {
+            let sharedDays = days(from: metDate, to: currentDate)
+            let sharedSeconds = max(0, Int(currentDate.timeIntervalSince(metDate)))
+            let sharedHeartbeats = Int((Double(sharedSeconds) / 60.0) * 70.0 * 2.0)
+            let personName = profile.favoritePersonName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let personSubtitle = personName.isEmpty ? "together on Earth" : "with \(personName)"
+
+            cards.append(CardData(id: .sharedDays, title: "Shared Days", value: formatLargeNumber(sharedDays), subtitle: personSubtitle, chartData: ascendingData, icon: "person.2.fill", color: tealColor, accentColor: .cyan, valueColor: .white))
+            cards.append(CardData(id: .sharedHeartbeats, title: "Shared Beats", value: formatMillions(sharedHeartbeats), subtitle: "combined since meeting", chartData: ascendingData, icon: "heart.text.square", color: tealColor, accentColor: .cyan, valueColor: .white))
+        }
+
+        if let heightCentimeters = profile.heightCentimeters, heightCentimeters > 0 {
+            let nailGrowthMeters = Double(stats.totalDaysAlive) * 0.0001 * 20.0
+            let bodyHeights = nailGrowthMeters / (heightCentimeters / 100.0)
+            cards.append(CardData(id: .nailGrowth, title: "Nail Growth", value: formatDouble(nailGrowthMeters) + "m", subtitle: "\(formatDouble(bodyHeights)) body heights", chartData: ascendingData, icon: "hand.raised", color: redColor, accentColor: .red, valueColor: Color(red: 1.0, green: 0.6, blue: 0.6)))
+        }
+
+        if let readingSpeed = profile.readingSpeed {
+            let readingStartDate = Calendar.current.date(byAdding: .year, value: 6, to: profile.dateOfBirth) ?? profile.dateOfBirth
+            let readingDays = days(from: readingStartDate, to: currentDate)
+            let estimatedWords = readingDays * readingSpeed.wordsPerMinute * 20
+            cards.append(CardData(id: .wordsRead, title: "Words Read", value: formatMillions(estimatedWords), subtitle: "\(readingSpeed.title.lowercased()) reading pace", chartData: ascendingData, icon: "book.pages", color: blueColor, accentColor: .blue, valueColor: .white))
+        }
+
+        return cards
+    }
+
+    private func days(from startDate: Date, to endDate: Date) -> Int {
+        max(0, Calendar.current.dateComponents([.day], from: startDate, to: endDate).day ?? 0)
     }
 }
 

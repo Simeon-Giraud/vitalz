@@ -248,12 +248,36 @@ struct ProfileEditorView: View {
     @State private var dateOfBirth: Date
     @State private var imageData: Data?
     @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var hasBirthTime: Bool
+    @State private var birthTime: Date
+    @State private var birthCity: String
+    @State private var hasPassion: Bool
+    @State private var passionTitle: String
+    @State private var passionStartDate: Date
+    @State private var passionHoursPerWeek: Double
+    @State private var hasFavoritePerson: Bool
+    @State private var favoritePersonName: String
+    @State private var favoritePersonMetDate: Date
+    @State private var heightCentimetersText: String
+    @State private var readingSpeed: ReadingSpeed?
 
     init(profile: VitalzProfile?) {
         self.profile = profile
         _name = State(initialValue: profile?.name ?? "Friend")
         _dateOfBirth = State(initialValue: profile?.dateOfBirth ?? Calendar.current.date(byAdding: .year, value: -25, to: Date()) ?? Date())
         _imageData = State(initialValue: profile?.imageData)
+        _hasBirthTime = State(initialValue: profile?.birthTimeTimestamp != nil)
+        _birthTime = State(initialValue: profile?.birthTime ?? Date())
+        _birthCity = State(initialValue: profile?.birthCity ?? "")
+        _hasPassion = State(initialValue: profile?.passionStartTimestamp != nil)
+        _passionTitle = State(initialValue: profile?.passionTitle ?? "")
+        _passionStartDate = State(initialValue: profile?.passionStartDate ?? Date())
+        _passionHoursPerWeek = State(initialValue: profile?.passionHoursPerWeek ?? 5)
+        _hasFavoritePerson = State(initialValue: profile?.favoritePersonMetTimestamp != nil)
+        _favoritePersonName = State(initialValue: profile?.favoritePersonName ?? "")
+        _favoritePersonMetDate = State(initialValue: profile?.favoritePersonMetDate ?? Date())
+        _heightCentimetersText = State(initialValue: profile?.heightCentimeters.map { String(format: "%.0f", $0) } ?? "")
+        _readingSpeed = State(initialValue: profile?.readingSpeed)
     }
 
     var body: some View {
@@ -286,6 +310,55 @@ struct ProfileEditorView: View {
                     DatePicker("Birthday", selection: $dateOfBirth, in: ...Date(), displayedComponents: [.date])
                 }
 
+                Section("Birth Details") {
+                    Toggle("I know the birth time", isOn: $hasBirthTime)
+
+                    if hasBirthTime {
+                        DatePicker("Birth Time", selection: $birthTime, displayedComponents: [.hourAndMinute])
+                    }
+
+                    TextField("Birth City", text: $birthCity)
+                        .textContentType(.addressCity)
+                }
+
+                Section("Day Zero") {
+                    Toggle("Track a passion or era", isOn: $hasPassion)
+
+                    if hasPassion {
+                        TextField("Started playing piano, moved to London...", text: $passionTitle)
+                        DatePicker("Start Date", selection: $passionStartDate, in: ...Date(), displayedComponents: [.date])
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Weekly dedication: \(Int(passionHoursPerWeek))h")
+                                .foregroundColor(.vitalzSecondaryText)
+
+                            Slider(value: $passionHoursPerWeek, in: 1...40, step: 1)
+                        }
+                    }
+                }
+
+                Section("Shared Orbit") {
+                    Toggle("Track a favorite person", isOn: $hasFavoritePerson)
+
+                    if hasFavoritePerson {
+                        TextField("Name", text: $favoritePersonName)
+                        DatePicker("Date You Met", selection: $favoritePersonMetDate, in: ...Date(), displayedComponents: [.date])
+                    }
+                }
+
+                Section("Biological Baselines") {
+                    TextField("Height in cm", text: $heightCentimetersText)
+                        .keyboardType(.decimalPad)
+
+                    Picker("Reading Speed", selection: $readingSpeed) {
+                        Text("Not set").tag(ReadingSpeed?.none)
+
+                        ForEach(ReadingSpeed.allCases) { speed in
+                            Text(speed.title).tag(ReadingSpeed?.some(speed))
+                        }
+                    }
+                }
+
                 if imageData != nil {
                     Section {
                         Button("Remove Photo", role: .destructive) {
@@ -312,18 +385,50 @@ struct ProfileEditorView: View {
     }
 
     private func save() {
+        let trimmedCity = birthCity.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPassion = passionTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedFavoritePerson = favoritePersonName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let heightCentimeters = Double(heightCentimetersText.replacingOccurrences(of: ",", with: "."))
+
         if let profile {
-            profileStore.updateProfile(
-                id: profile.id,
-                name: name,
+            var updatedProfile = profile
+            updatedProfile.name = sanitizedName(fallback: "Me")
+            updatedProfile.dateOfBirthTimestamp = dateOfBirth.timeIntervalSince1970
+            updatedProfile.imageData = imageData
+            updatedProfile.birthTimeTimestamp = hasBirthTime ? birthTime.timeIntervalSince1970 : nil
+            updatedProfile.birthCity = trimmedCity
+            updatedProfile.passionTitle = hasPassion ? trimmedPassion : ""
+            updatedProfile.passionStartTimestamp = hasPassion ? passionStartDate.timeIntervalSince1970 : nil
+            updatedProfile.passionHoursPerWeek = passionHoursPerWeek
+            updatedProfile.favoritePersonName = hasFavoritePerson ? trimmedFavoritePerson : ""
+            updatedProfile.favoritePersonMetTimestamp = hasFavoritePerson ? favoritePersonMetDate.timeIntervalSince1970 : nil
+            updatedProfile.heightCentimeters = heightCentimeters
+            updatedProfile.readingSpeed = readingSpeed
+            profileStore.saveProfile(updatedProfile)
+        } else {
+            var newProfile = profileStore.addProfile(
+                name: sanitizedName(fallback: "Friend"),
                 dateOfBirth: dateOfBirth,
                 imageData: imageData
             )
-        } else {
-            profileStore.addProfile(name: name, dateOfBirth: dateOfBirth, imageData: imageData)
+            newProfile.birthTimeTimestamp = hasBirthTime ? birthTime.timeIntervalSince1970 : nil
+            newProfile.birthCity = trimmedCity
+            newProfile.passionTitle = hasPassion ? trimmedPassion : ""
+            newProfile.passionStartTimestamp = hasPassion ? passionStartDate.timeIntervalSince1970 : nil
+            newProfile.passionHoursPerWeek = passionHoursPerWeek
+            newProfile.favoritePersonName = hasFavoritePerson ? trimmedFavoritePerson : ""
+            newProfile.favoritePersonMetTimestamp = hasFavoritePerson ? favoritePersonMetDate.timeIntervalSince1970 : nil
+            newProfile.heightCentimeters = heightCentimeters
+            newProfile.readingSpeed = readingSpeed
+            profileStore.saveProfile(newProfile)
         }
 
         dismiss()
+    }
+
+    private func sanitizedName(fallback: String) -> String {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedName.isEmpty ? fallback : trimmedName
     }
 
     private func loadSelectedPhoto() async {
