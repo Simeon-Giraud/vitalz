@@ -166,7 +166,12 @@ public struct DashboardView: View {
         .sheet(isPresented: $showingRearrange) {
             RearrangeCardsView()
         }
-        .onAppear { updateStats(for: currentDate) }
+        .onAppear { 
+            updateStats(for: currentDate) 
+            if cardOrder.isEmpty {
+                cardOrder = defaultCardOrder.joined(separator: ",")
+            }
+        }
         .onChange(of: profileStore.selectedProfileID) { _ in updateStats(for: currentDate) }
         .onChange(of: profileStore.selectedProfile.dateOfBirthTimestamp) { _ in updateStats(for: currentDate) }
         .onReceive(timer) { input in
@@ -345,7 +350,8 @@ public struct DashboardView: View {
         .onDrop(of: [.text], delegate: DashboardDropDelegate(
             itemID: element.id,
             cardOrder: $cardOrder,
-            draggedItemID: $draggedItemID
+            draggedItemID: $draggedItemID,
+            defaultCardOrder: defaultCardOrder
         ))
     }
 
@@ -488,17 +494,20 @@ struct DashboardDropDelegate: DropDelegate {
     let itemID: String
     @Binding var cardOrder: String
     @Binding var draggedItemID: String?
+    let defaultCardOrder: [String]
 
     func dropEntered(info: DropInfo) {
         guard let dragged = draggedItemID,
               dragged != itemID else { return }
         
-        var items = cardOrder.components(separatedBy: ",")
+        let currentOrder = cardOrder.isEmpty ? defaultCardOrder : cardOrder.components(separatedBy: ",")
+        var items = currentOrder
+        
         guard let from = items.firstIndex(of: dragged),
               let to = items.firstIndex(of: itemID) else { return }
         
         if from != to {
-            withAnimation(.default) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 let moved = items.remove(at: from)
                 items.insert(moved, at: to)
                 cardOrder = items.joined(separator: ",")
