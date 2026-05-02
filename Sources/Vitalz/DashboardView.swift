@@ -632,8 +632,9 @@ struct ExpandedCardView: View {
     var onClose: () -> Void
     
     @State private var showDetails = false
+    @State private var showShareSheet = false
 
-    private let supportingTextColor = Color.white.opacity(0.65)
+    private let supportingTextColor = Color.vitalzSecondaryText
     
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -731,7 +732,7 @@ struct ExpandedCardView: View {
                         
                         // Share Button
                         Button(action: {
-                            ShareHelper.shareMilestone(title: card.title, subtitle: "Vitalz Checkpoint", statValue: card.value)
+                            showShareSheet = true
                         }) {
                             HStack {
                                 Image(systemName: "square.and.arrow.up")
@@ -744,6 +745,13 @@ struct ExpandedCardView: View {
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
                                     .fill(Color.vitalzAccent)
+                            )
+                        }
+                        .sheet(isPresented: $showShareSheet) {
+                            ShareActionSheet(
+                                milestoneTitle: card.title,
+                                subtitle: "Vitalz Checkpoint",
+                                statValue: card.value
                             )
                         }
                     }
