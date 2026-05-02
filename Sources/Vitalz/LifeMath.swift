@@ -25,13 +25,13 @@ public struct Milestone: Identifiable {
     public let date: Date?
     public let icon: String
     public let category: MilestoneCategory
-    
     public enum MilestoneCategory: String, CaseIterable {
         case chronological = "Chronological Titans"
         case biological = "Biological Engines"
         case cosmic = "Cosmic Perspective"
         case quirky = "Symmetries & Palindromes"
         case lifeAnchors = "Statistical Life Anchors"
+        case bonds = "Shared Bonds"
     }
 }
 
@@ -362,6 +362,52 @@ public struct LifeMath {
         return milestones.sorted { ($0.date ?? .distantFuture) < ($1.date ?? .distantFuture) }
     }
     
+    public func calculateSharedMilestones(for person: TrackedPerson) -> [Milestone] {
+        var milestones: [Milestone] = []
+        let metDate = person.metDate
+        let name = person.name.isEmpty ? "Friend" : person.name
+
+        // Shared Days
+        let dayMilestones: [(Int, String)] = [
+            (100, "100 Days"),
+            (500, "500 Days"),
+            (1_000, "1,000 Days"),
+            (5_000, "5,000 Days"),
+            (10_000, "10,000 Days"),
+        ]
+        for (days, title) in dayMilestones {
+            let date = Calendar.current.date(byAdding: .day, value: days, to: metDate)
+            milestones.append(Milestone(
+                id: "shared.\(person.id).day.\(days)",
+                title: "\(title) with \(name)",
+                subtitle: "\(formatNumber(days)) sunrises shared on Earth",
+                date: date, icon: "sun.max.fill", category: .bonds
+            ))
+        }
+
+        // Shared Heartbeats
+        let heartbeatMilestones: [(Double, String)] = [
+            (50_000_000, "50M Beats"),
+            (100_000_000, "100M Beats"),
+            (250_000_000, "250M Beats"),
+            (500_000_000, "500M Beats"),
+            (1_000_000_000, "1 Billion Beats"),
+        ]
+        for (beats, title) in heartbeatMilestones {
+            // Formula: beats = seconds * (70 * 2) / 60 => seconds = beats * 60 / 140
+            let seconds = beats * 60.0 / 140.0
+            milestones.append(Milestone(
+                id: "shared.\(person.id).heartbeat.\(Int(beats))",
+                title: "\(title) with \(name)",
+                subtitle: "Your combined hearts beating in sync",
+                date: metDate.addingTimeInterval(seconds),
+                icon: "heart.fill", category: .bonds
+            ))
+        }
+
+        return milestones
+    }
+
     private func formatNumber(_ number: Int) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal

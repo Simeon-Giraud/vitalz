@@ -27,8 +27,17 @@ public struct MilestonesView: View {
     }
     
     public var body: some View {
-        let math = LifeMath(dateOfBirth: profileStore.selectedProfile.effectiveDateOfBirth)
-        let allMilestones = math.calculateMilestones()
+        let profile = profileStore.selectedProfile
+        let math = LifeMath(dateOfBirth: profile.effectiveDateOfBirth)
+        var allMilestones = math.calculateMilestones()
+
+        // Append Shared Bonds milestones for each tracked person
+        for person in profile.trackedPeople {
+            allMilestones.append(contentsOf: math.calculateSharedMilestones(for: person))
+        }
+
+        // Re-sort after appending
+        allMilestones.sort { ($0.date ?? .distantFuture) < ($1.date ?? .distantFuture) }
         
         ZStack {
             Color.vitalzBackground.ignoresSafeArea()
@@ -148,6 +157,7 @@ public struct MilestonesView: View {
         case .cosmic: return "Cosmic"
         case .quirky: return "Quirky"
         case .lifeAnchors: return "Life %"
+        case .bonds: return "Bonds"
         }
     }
     
@@ -158,6 +168,7 @@ public struct MilestonesView: View {
         case .cosmic: return "moon.stars"
         case .quirky: return "sparkles"
         case .lifeAnchors: return "chart.bar"
+        case .bonds: return "person.2.fill"
         }
     }
     
@@ -168,6 +179,7 @@ public struct MilestonesView: View {
         case .cosmic: return .blue
         case .quirky: return .purple
         case .lifeAnchors: return .green
+        case .bonds: return .pink
         }
     }
     

@@ -505,13 +505,8 @@ struct ProfileEditorView: View {
     @State private var hasBirthTime: Bool
     @State private var birthTime: Date
     @State private var birthCity: String
-    @State private var hasPassion: Bool
-    @State private var passionTitle: String
-    @State private var passionStartDate: Date
-    @State private var passionHoursPerWeek: Double
-    @State private var hasFavoritePerson: Bool
-    @State private var favoritePersonName: String
-    @State private var favoritePersonMetDate: Date
+    @State private var hobbies: [Hobby]
+    @State private var trackedPeople: [TrackedPerson]
     @State private var heightCentimetersText: String
     @State private var readingSpeed: ReadingSpeed?
 
@@ -523,13 +518,8 @@ struct ProfileEditorView: View {
         _hasBirthTime = State(initialValue: profile?.birthTimeTimestamp != nil)
         _birthTime = State(initialValue: profile?.birthTime ?? Date())
         _birthCity = State(initialValue: profile?.birthCity ?? "")
-        _hasPassion = State(initialValue: profile?.passionStartTimestamp != nil)
-        _passionTitle = State(initialValue: profile?.passionTitle ?? "")
-        _passionStartDate = State(initialValue: profile?.passionStartDate ?? Date())
-        _passionHoursPerWeek = State(initialValue: profile?.passionHoursPerWeek ?? 5)
-        _hasFavoritePerson = State(initialValue: profile?.favoritePersonMetTimestamp != nil)
-        _favoritePersonName = State(initialValue: profile?.favoritePersonName ?? "")
-        _favoritePersonMetDate = State(initialValue: profile?.favoritePersonMetDate ?? Date())
+        _hobbies = State(initialValue: profile?.hobbies ?? [])
+        _trackedPeople = State(initialValue: profile?.trackedPeople ?? [])
         _heightCentimetersText = State(initialValue: profile?.heightCentimeters.map { String(format: "%.0f", $0) } ?? "")
         _readingSpeed = State(initialValue: profile?.readingSpeed)
     }
@@ -575,28 +565,89 @@ struct ProfileEditorView: View {
                         .textContentType(.addressCity)
                 }
 
-                Section("Day Zero") {
-                    Toggle("Track a passion or era", isOn: $hasPassion)
-
-                    if hasPassion {
-                        TextField("Started playing piano, moved to London...", text: $passionTitle)
-                        DatePicker("Start Date", selection: $passionStartDate, in: ...Date(), displayedComponents: [.date])
-
+                // MARK: - Hobbies (Multiple)
+                Section("Your Passions") {
+                    ForEach($hobbies) { $hobby in
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Weekly dedication: \(Int(passionHoursPerWeek))h")
-                                .foregroundColor(.vitalzSecondaryText)
+                            HStack {
+                                Image(systemName: hobby.icon)
+                                    .foregroundColor(.vitalzAccent)
+                                    .frame(width: 24)
+                                TextField("Hobby name", text: $hobby.title)
+                                    .font(.system(size: 15, weight: .medium))
+                                Spacer()
+                                Toggle("", isOn: $hobby.isEnabled)
+                                    .labelsHidden()
+                                    .tint(.vitalzAccent)
+                            }
 
-                            Slider(value: $passionHoursPerWeek, in: 1...40, step: 1)
+                            DatePicker("Started", selection: Binding(
+                                get: { hobby.startDate },
+                                set: { hobby.startTimestamp = $0.timeIntervalSince1970 }
+                            ), in: ...Date(), displayedComponents: [.date])
+                            .font(.system(size: 14))
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Weekly: \(Int(hobby.hoursPerWeek))h")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.vitalzSecondaryText)
+                                Slider(value: $hobby.hoursPerWeek, in: 1...40, step: 1)
+                            }
                         }
+                        .padding(.vertical, 4)
+                    }
+                    .onDelete { indices in
+                        hobbies.remove(atOffsets: indices)
+                    }
+
+                    Button {
+                        hobbies.append(Hobby(
+                            title: "",
+                            startTimestamp: Date().timeIntervalSince1970,
+                            hoursPerWeek: 5
+                        ))
+                    } label: {
+                        Label("Add Hobby", systemImage: "plus.circle.fill")
+                            .foregroundColor(.vitalzAccent)
                     }
                 }
 
-                Section("Shared Orbit") {
-                    Toggle("Track a favorite person", isOn: $hasFavoritePerson)
+                // MARK: - Tracked People (Multiple)
+                Section("Your Orbit") {
+                    ForEach($trackedPeople) { $person in
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Image(systemName: "person.fill")
+                                    .foregroundColor(.vitalzAccent)
+                                    .frame(width: 24)
+                                TextField("Name", text: $person.name)
+                                    .font(.system(size: 15, weight: .medium))
+                            }
 
-                    if hasFavoritePerson {
-                        TextField("Name", text: $favoritePersonName)
-                        DatePicker("Date You Met", selection: $favoritePersonMetDate, in: ...Date(), displayedComponents: [.date])
+                            TextField("Relationship (Friend, Partner...)", text: $person.relationship)
+                                .font(.system(size: 14))
+                                .foregroundColor(.vitalzSecondaryText)
+
+                            DatePicker("Date You Met", selection: Binding(
+                                get: { person.metDate },
+                                set: { person.metTimestamp = $0.timeIntervalSince1970 }
+                            ), in: ...Date(), displayedComponents: [.date])
+                            .font(.system(size: 14))
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .onDelete { indices in
+                        trackedPeople.remove(atOffsets: indices)
+                    }
+
+                    Button {
+                        trackedPeople.append(TrackedPerson(
+                            name: "",
+                            metTimestamp: Date().timeIntervalSince1970
+                        ))
+                    } label: {
+                        Label("Add Person", systemImage: "plus.circle.fill")
+                            .foregroundColor(.vitalzAccent)
                     }
                 }
 
@@ -652,9 +703,11 @@ struct ProfileEditorView: View {
 
     private func save() {
         let trimmedCity = birthCity.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedPassion = passionTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedFavoritePerson = favoritePersonName.trimmingCharacters(in: .whitespacesAndNewlines)
         let heightCentimeters = Double(heightCentimetersText.replacingOccurrences(of: ",", with: "."))
+
+        // Clean up empty hobbies/people
+        let cleanedHobbies = hobbies.filter { !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        let cleanedPeople = trackedPeople.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
         if let profile {
             var updatedProfile = profile
@@ -663,11 +716,8 @@ struct ProfileEditorView: View {
             updatedProfile.imageData = imageData
             updatedProfile.birthTimeTimestamp = hasBirthTime ? birthTime.timeIntervalSince1970 : nil
             updatedProfile.birthCity = trimmedCity
-            updatedProfile.passionTitle = hasPassion ? trimmedPassion : ""
-            updatedProfile.passionStartTimestamp = hasPassion ? passionStartDate.timeIntervalSince1970 : nil
-            updatedProfile.passionHoursPerWeek = passionHoursPerWeek
-            updatedProfile.favoritePersonName = hasFavoritePerson ? trimmedFavoritePerson : ""
-            updatedProfile.favoritePersonMetTimestamp = hasFavoritePerson ? favoritePersonMetDate.timeIntervalSince1970 : nil
+            updatedProfile.hobbies = cleanedHobbies
+            updatedProfile.trackedPeople = cleanedPeople
             updatedProfile.heightCentimeters = heightCentimeters
             updatedProfile.readingSpeed = readingSpeed
             profileStore.saveProfile(updatedProfile)
@@ -679,11 +729,8 @@ struct ProfileEditorView: View {
             )
             newProfile.birthTimeTimestamp = hasBirthTime ? birthTime.timeIntervalSince1970 : nil
             newProfile.birthCity = trimmedCity
-            newProfile.passionTitle = hasPassion ? trimmedPassion : ""
-            newProfile.passionStartTimestamp = hasPassion ? passionStartDate.timeIntervalSince1970 : nil
-            newProfile.passionHoursPerWeek = passionHoursPerWeek
-            newProfile.favoritePersonName = hasFavoritePerson ? trimmedFavoritePerson : ""
-            newProfile.favoritePersonMetTimestamp = hasFavoritePerson ? favoritePersonMetDate.timeIntervalSince1970 : nil
+            newProfile.hobbies = cleanedHobbies
+            newProfile.trackedPeople = cleanedPeople
             newProfile.heightCentimeters = heightCentimeters
             newProfile.readingSpeed = readingSpeed
             profileStore.saveProfile(newProfile)

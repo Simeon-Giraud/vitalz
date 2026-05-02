@@ -15,8 +15,15 @@ public struct MainTabView: View {
                     Text("Dashboard")
                 }
 
-            MilestonesView()
+            FriendsView()
                 .tag(1)
+                .tabItem {
+                    Image(systemName: "person.2.fill")
+                    Text("Friends")
+                }
+
+            MilestonesView()
+                .tag(2)
                 .tabItem {
                     Image(systemName: "flag.fill")
                     Text("Milestones")

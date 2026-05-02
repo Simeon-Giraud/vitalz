@@ -8,13 +8,67 @@ public struct VitalzProfile: Codable, Identifiable, Equatable {
     public var imageData: Data?
     public var birthTimeTimestamp: Double?
     public var birthCity: String
-    public var passionTitle: String
-    public var passionStartTimestamp: Double?
-    public var passionHoursPerWeek: Double
-    public var favoritePersonName: String
-    public var favoritePersonMetTimestamp: Double?
+    public var hobbies: [Hobby]
+    public var trackedPeople: [TrackedPerson]
     public var heightCentimeters: Double?
     public var readingSpeed: ReadingSpeed?
+
+    // Legacy single-hobby/person fields kept for backward compat
+    // These read from / write to the first element in the arrays.
+    public var passionTitle: String {
+        get { hobbies.first?.title ?? "" }
+        set {
+            if hobbies.isEmpty {
+                hobbies.append(Hobby(title: newValue, startTimestamp: Date().timeIntervalSince1970, hoursPerWeek: 5))
+            } else {
+                hobbies[0].title = newValue
+            }
+        }
+    }
+    public var passionStartTimestamp: Double? {
+        get { hobbies.first?.startTimestamp }
+        set {
+            if let v = newValue {
+                if hobbies.isEmpty {
+                    hobbies.append(Hobby(title: "", startTimestamp: v, hoursPerWeek: 5))
+                } else {
+                    hobbies[0].startTimestamp = v
+                }
+            } else if !hobbies.isEmpty {
+                hobbies.removeFirst()
+            }
+        }
+    }
+    public var passionHoursPerWeek: Double {
+        get { hobbies.first?.hoursPerWeek ?? 5 }
+        set {
+            if !hobbies.isEmpty { hobbies[0].hoursPerWeek = newValue }
+        }
+    }
+    public var favoritePersonName: String {
+        get { trackedPeople.first?.name ?? "" }
+        set {
+            if trackedPeople.isEmpty {
+                trackedPeople.append(TrackedPerson(name: newValue, metTimestamp: Date().timeIntervalSince1970))
+            } else {
+                trackedPeople[0].name = newValue
+            }
+        }
+    }
+    public var favoritePersonMetTimestamp: Double? {
+        get { trackedPeople.first?.metTimestamp }
+        set {
+            if let v = newValue {
+                if trackedPeople.isEmpty {
+                    trackedPeople.append(TrackedPerson(name: "", metTimestamp: v))
+                } else {
+                    trackedPeople[0].metTimestamp = v
+                }
+            } else if !trackedPeople.isEmpty {
+                trackedPeople.removeFirst()
+            }
+        }
+    }
 
     public init(
         id: String = UUID().uuidString,
@@ -23,11 +77,8 @@ public struct VitalzProfile: Codable, Identifiable, Equatable {
         imageData: Data? = nil,
         birthTimeTimestamp: Double? = nil,
         birthCity: String = "",
-        passionTitle: String = "",
-        passionStartTimestamp: Double? = nil,
-        passionHoursPerWeek: Double = 5,
-        favoritePersonName: String = "",
-        favoritePersonMetTimestamp: Double? = nil,
+        hobbies: [Hobby] = [],
+        trackedPeople: [TrackedPerson] = [],
         heightCentimeters: Double? = nil,
         readingSpeed: ReadingSpeed? = nil
     ) {
@@ -37,13 +88,60 @@ public struct VitalzProfile: Codable, Identifiable, Equatable {
         self.imageData = imageData
         self.birthTimeTimestamp = birthTimeTimestamp
         self.birthCity = birthCity
-        self.passionTitle = passionTitle
-        self.passionStartTimestamp = passionStartTimestamp
-        self.passionHoursPerWeek = passionHoursPerWeek
-        self.favoritePersonName = favoritePersonName
-        self.favoritePersonMetTimestamp = favoritePersonMetTimestamp
+        self.hobbies = hobbies
+        self.trackedPeople = trackedPeople
         self.heightCentimeters = heightCentimeters
         self.readingSpeed = readingSpeed
+    }
+
+    // MARK: - Codable Migration
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, dateOfBirthTimestamp, imageData, birthTimeTimestamp, birthCity
+        case hobbies, trackedPeople, heightCentimeters, readingSpeed
+        // Legacy keys
+        case passionTitle, passionStartTimestamp, passionHoursPerWeek
+        case favoritePersonName, favoritePersonMetTimestamp
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        dateOfBirthTimestamp = try c.decode(Double.self, forKey: .dateOfBirthTimestamp)
+        imageData = try c.decodeIfPresent(Data.self, forKey: .imageData)
+        birthTimeTimestamp = try c.decodeIfPresent(Double.self, forKey: .birthTimeTimestamp)
+        birthCity = try c.decodeIfPresent(String.self, forKey: .birthCity) ?? ""
+        heightCentimeters = try c.decodeIfPresent(Double.self, forKey: .heightCentimeters)
+        readingSpeed = try c.decodeIfPresent(ReadingSpeed.self, forKey: .readingSpeed)
+
+        // Try new arrays first, fall back to legacy single fields
+        if let h = try? c.decode([Hobby].self, forKey: .hobbies) {
+            hobbies = h
+        } else {
+            // Migrate from legacy
+            let title = try c.decodeIfPresent(String.self, forKey: .passionTitle) ?? ""
+            let start = try c.decodeIfPresent(Double.self, forKey: .passionStartTimestamp)
+            let hours = try c.decodeIfPresent(Double.self, forKey: .passionHoursPerWeek) ?? 5
+            if let start, !title.isEmpty {
+                hobbies = [Hobby(title: title, startTimestamp: start, hoursPerWeek: hours)]
+            } else {
+                hobbies = []
+            }
+        }
+
+        if let p = try? c.decode([TrackedPerson].self, forKey: .trackedPeople) {
+            trackedPeople = p
+        } else {
+            // Migrate from legacy
+            let pName = try c.decodeIfPresent(String.self, forKey: .favoritePersonName) ?? ""
+            let pMet = try c.decodeIfPresent(Double.self, forKey: .favoritePersonMetTimestamp)
+            if let pMet, !pName.isEmpty {
+                trackedPeople = [TrackedPerson(name: pName, metTimestamp: pMet)]
+            } else {
+                trackedPeople = []
+            }
+        }
     }
 
     public var dateOfBirth: Date {
@@ -72,11 +170,11 @@ public struct VitalzProfile: Codable, Identifiable, Equatable {
     }
 
     public var passionStartDate: Date? {
-        passionStartTimestamp.map(Date.init(timeIntervalSince1970:))
+        hobbies.first.map { Date(timeIntervalSince1970: $0.startTimestamp) }
     }
 
     public var favoritePersonMetDate: Date? {
-        favoritePersonMetTimestamp.map(Date.init(timeIntervalSince1970:))
+        trackedPeople.first.map { Date(timeIntervalSince1970: $0.metTimestamp) }
     }
 }
 
@@ -101,6 +199,72 @@ public enum ReadingSpeed: String, CaseIterable, Codable, Identifiable {
         case .average: return 225
         case .fast: return 320
         }
+    }
+}
+
+// MARK: - Hobby
+
+public struct Hobby: Codable, Identifiable, Equatable {
+    public let id: String
+    public var title: String
+    public var startTimestamp: Double
+    public var hoursPerWeek: Double
+    public var isEnabled: Bool
+    public var icon: String
+
+    public init(
+        id: String = UUID().uuidString,
+        title: String,
+        startTimestamp: Double,
+        hoursPerWeek: Double = 5,
+        isEnabled: Bool = true,
+        icon: String = "sparkles"
+    ) {
+        self.id = id
+        self.title = title
+        self.startTimestamp = startTimestamp
+        self.hoursPerWeek = hoursPerWeek
+        self.isEnabled = isEnabled
+        self.icon = icon
+    }
+
+    public var startDate: Date {
+        Date(timeIntervalSince1970: startTimestamp)
+    }
+}
+
+// MARK: - Tracked Person
+
+public struct TrackedPerson: Codable, Identifiable, Equatable {
+    public let id: String
+    public var name: String
+    public var metTimestamp: Double
+    public var dateOfBirthTimestamp: Double?
+    public var imageData: Data?
+    public var relationship: String
+
+    public init(
+        id: String = UUID().uuidString,
+        name: String,
+        metTimestamp: Double,
+        dateOfBirthTimestamp: Double? = nil,
+        imageData: Data? = nil,
+        relationship: String = "Friend"
+    ) {
+        self.id = id
+        self.name = name
+        self.metTimestamp = metTimestamp
+        self.dateOfBirthTimestamp = dateOfBirthTimestamp
+        self.imageData = imageData
+        self.relationship = relationship
+    }
+
+    public var metDate: Date {
+        Date(timeIntervalSince1970: metTimestamp)
+    }
+
+    public var dateOfBirth: Date? {
+        dateOfBirthTimestamp.map(Date.init(timeIntervalSince1970:))
     }
 }
 

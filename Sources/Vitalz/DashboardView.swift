@@ -287,10 +287,23 @@ public struct DashboardView: View {
         Group {
             switch element {
             case .card(let card):
-                Button(action: { selectCard(card) }) {
-                    GridCardView(card: card, animation: animation, isSelected: selectedCardID == card.id)
+                if card.id == .passionEra && card.isFullWidth {
+                    Button(action: { selectCard(card) }) {
+                        EraShareGridCardView(
+                            card: card,
+                            hobbies: profileStore.selectedProfile.hobbies.filter { $0.isEnabled },
+                            stats: currentStats,
+                            animation: animation,
+                            isSelected: selectedCardID == card.id
+                        )
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Button(action: { selectCard(card) }) {
+                        GridCardView(card: card, animation: animation, isSelected: selectedCardID == card.id)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
                 
             case .adSpace:
                 VStack(alignment: .leading, spacing: 12) {
@@ -444,22 +457,25 @@ public struct DashboardView: View {
             cards.append(CardData(id: .sunsets, title: "Sunsets", value: formatLargeNumber(stats.totalDaysAlive), subtitle: subtitle, chartData: ascendingData, icon: "sunset", color: cardColor(.sunsets), accentColor: cardAccent(.sunsets), valueColor: cardValue(.sunsets)))
         }
 
-        if let passionStartDate = profile.passionStartDate {
-            let passionDays = days(from: passionStartDate, to: currentDate)
+        // Multi-hobby Era Share — uses the first enabled hobby for the card value
+        let enabledHobbies = profile.hobbies.filter { $0.isEnabled }
+        if let primary = enabledHobbies.first {
+            let passionDays = days(from: primary.startDate, to: currentDate)
             let eraPercentage = stats.totalDaysAlive > 0 ? (Double(passionDays) / Double(stats.totalDaysAlive)) * 100 : 0
-            let passionTitle = profile.passionTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-            let passionSubtitle = passionTitle.isEmpty ? "of this era" : "as \(passionTitle)"
-            let estimatedHours = max(0, Int((Double(passionDays) / 7.0) * profile.passionHoursPerWeek))
+            let trimmedTitle = primary.title.trimmingCharacters(in: .whitespacesAndNewlines)
+            let countSuffix = enabledHobbies.count > 1 ? " (+\(enabledHobbies.count - 1))" : ""
+            let passionSubtitle = trimmedTitle.isEmpty ? "of this era" : "as \(trimmedTitle)\(countSuffix)"
+            let estimatedHours = max(0, Int((Double(passionDays) / 7.0) * primary.hoursPerWeek))
 
-            cards.append(CardData(id: .passionEra, title: "Era Share", value: formatDouble(eraPercentage) + "%", subtitle: passionSubtitle, chartData: ascendingData, icon: "sparkles", color: cardColor(.passionEra), accentColor: cardAccent(.passionEra), valueColor: cardValue(.passionEra)))
+            cards.append(CardData(id: .passionEra, title: "Era Share", value: formatDouble(eraPercentage) + "%", subtitle: passionSubtitle, chartData: ascendingData, icon: "sparkles", color: cardColor(.passionEra), accentColor: cardAccent(.passionEra), valueColor: cardValue(.passionEra), isFullWidth: enabledHobbies.count > 1))
             cards.append(CardData(id: .masteryHours, title: "Mastery", value: formatLargeNumber(estimatedHours) + "h", subtitle: "toward 10,000 hours", chartData: ascendingData, icon: "target", color: cardColor(.masteryHours), accentColor: cardAccent(.masteryHours), valueColor: cardValue(.masteryHours)))
         }
 
-        if let metDate = profile.favoritePersonMetDate {
-            let sharedDays = days(from: metDate, to: currentDate)
-            let sharedSeconds = max(0, Int(currentDate.timeIntervalSince(metDate)))
+        if let person = profile.trackedPeople.first {
+            let sharedDays = days(from: person.metDate, to: currentDate)
+            let sharedSeconds = max(0, Int(currentDate.timeIntervalSince(person.metDate)))
             let sharedHeartbeats = Int((Double(sharedSeconds) / 60.0) * 70.0 * 2.0)
-            let personName = profile.favoritePersonName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let personName = person.name.trimmingCharacters(in: .whitespacesAndNewlines)
             let personSubtitle = personName.isEmpty ? "together on Earth" : "with \(personName)"
 
             cards.append(CardData(id: .sharedDays, title: "Shared Days", value: formatLargeNumber(sharedDays), subtitle: personSubtitle, chartData: ascendingData, icon: "person.2.fill", color: cardColor(.sharedDays), accentColor: cardAccent(.sharedDays), valueColor: cardValue(.sharedDays)))
@@ -589,7 +605,7 @@ struct GridCardView: View {
         ZStack {
             if isSelected {
                 Color.clear
-                    .frame(height: card.isFullWidth ? 140 : 160)
+                    .frame(minHeight: card.isFullWidth ? 140 : 160)
             } else {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
@@ -620,7 +636,83 @@ struct GridCardView: View {
                 }
                 .padding(20)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .frame(height: card.isFullWidth ? 140 : 160)
+                .frame(height: card.isFullWidth ? nil : 160)
+                .background(
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(card.color)
+                        .matchedGeometryEffect(id: "bg\(card.id)", in: animation)
+                )
+            }
+        }
+    }
+}
+
+struct EraShareGridCardView: View {
+    let card: CardData
+    let hobbies: [Hobby]
+    let stats: LifeStats
+    var animation: Namespace.ID
+    var isSelected: Bool
+
+    var body: some View {
+        ZStack {
+            if isSelected {
+                Color.clear.frame(minHeight: 180)
+            } else {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Header
+                    HStack {
+                        Text(card.title)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.vitalzSecondaryText)
+                            .matchedGeometryEffect(id: "title\(card.id)", in: animation)
+                        Spacer()
+                        Image(systemName: card.icon)
+                            .foregroundColor(card.accentColor)
+                            .opacity(0.8)
+                            .matchedGeometryEffect(id: "icon\(card.id)", in: animation)
+                    }
+
+                    // Hobby List
+                    VStack(spacing: 16) {
+                        ForEach(hobbies) { hobby in
+                            let days = max(0, Calendar.current.dateComponents([.day], from: hobby.startDate, to: Date()).day ?? 0)
+                            let percentage = stats.totalDaysAlive > 0 ? (Double(days) / Double(stats.totalDaysAlive)) * 100 : 0
+                            
+                            HStack(spacing: 12) {
+                                Image(systemName: hobby.icon)
+                                    .font(.system(size: 16))
+                                    .foregroundColor(card.accentColor)
+                                    .frame(width: 24)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(hobby.title.isEmpty ? "Hobby" : hobby.title)
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundColor(card.valueColor)
+                                        .lineLimit(1)
+                                    
+                                    Text("\(String(format: "%.1f", percentage))% of your life")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(.vitalzSecondaryText)
+                                }
+                                
+                                Spacer()
+                                
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text("\(days)")
+                                        .font(.system(size: 16, weight: .black))
+                                        .foregroundColor(card.accentColor)
+                                    Text("days")
+                                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                                        .foregroundColor(.vitalzSecondaryText)
+                                        .textCase(.uppercase)
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
                     RoundedRectangle(cornerRadius: 24)
                         .fill(card.color)
