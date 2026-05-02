@@ -40,27 +40,30 @@ jobs:
       - name: List Schemes
         run: xcodebuild -list -project Vitalz.xcodeproj
 
-      - name: Build for Simulator
+      - name: Build and Test
         run: |
-          xcodebuild build \
+          xcodebuild test \
             -project Vitalz.xcodeproj \
             -scheme Vitalz \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath "$DERIVED_DATA_PATH" \
+            -resultBundlePath test_results.xcresult \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_IDENTITY="" \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
             COMPILER_INDEX_STORE_ENABLE=NO
+        continue-on-error: true
 
-      - name: Debug Build Output
-        if: failure()
+      - name: Extract Screenshots
+        if: always()
         run: |
-          echo "Show Build Settings:"
-          xcodebuild -showBuildSettings -project Vitalz.xcodeproj -scheme Vitalz
-          echo "Listing derived data:"
-          ls -R "$DERIVED_DATA_PATH" || echo "Derived data not found"
+          mkdir -p screenshots
+          if [ -d "test_results.xcresult" ]; then
+            find test_results.xcresult -name "*.png" -exec cp {} screenshots/ \;
+          fi
+          echo "Extracted $(ls screenshots | wc -l) screenshots"
 
       - name: Zip simulator app
         run: |
@@ -98,9 +101,17 @@ jobs:
           path: appetize-response.json
           retention-days: 5
 
-      - name: Upload Artifact
+      - name: Upload Simulator App
         uses: actions/upload-artifact@v4
         with:
           name: Vitalz-Simulator-App
           path: ${{ env.APP_ZIP_PATH }}
+          retention-days: 5
+
+      - name: Upload Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vitalz-Screenshots
+          path: screenshots/
           retention-days: 5
