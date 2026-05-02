@@ -56,6 +56,7 @@ targets:
       PROVISIONING_PROFILE_SPECIFIER: ""
       DEVELOPMENT_TEAM: ""
       AD_HOC_CODE_SIGNING_ALLOWED: YES
+      GENERATE_INFOPLIST_FILE: YES
       INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier: com.apple.widgetkit-extension
 
   VitalzUITests:

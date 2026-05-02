@@ -50,10 +50,6 @@ public class HealthKitManager: ObservableObject {
         guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else { return nil }
         
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
-        let query = HKSampleQuery(sampleType: heartRateType, predicate: nil, limit: 1, sortDescriptors: [sortDescriptor]) { _, samples, error in
-            // Handle callback
-        }
-        
         // This is a simplified version using the modern async API if available or wrapping the old one
         return await withCheckedContinuation { continuation in
             let query = HKSampleQuery(sampleType: heartRateType, predicate: nil, limit: 1, sortDescriptors: [sortDescriptor]) { _, samples, error in
