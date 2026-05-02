@@ -156,6 +156,13 @@ public struct VitalzProfile: Codable, Identifiable, Equatable {
         try c.encode(trackedPeople, forKey: .trackedPeople)
         try c.encodeIfPresent(heightCentimeters, forKey: .heightCentimeters)
         try c.encodeIfPresent(readingSpeed, forKey: .readingSpeed)
+
+        // Encode legacy computed properties for backward compatibility
+        try c.encodeIfPresent(passionTitle, forKey: .passionTitle)
+        try c.encodeIfPresent(passionStartTimestamp, forKey: .passionStartTimestamp)
+        try c.encode(passionHoursPerWeek, forKey: .passionHoursPerWeek)
+        try c.encodeIfPresent(favoritePersonName, forKey: .favoritePersonName)
+        try c.encodeIfPresent(favoritePersonMetTimestamp, forKey: .favoritePersonMetTimestamp)
     }
 
     public var dateOfBirth: Date {

@@ -26,18 +26,22 @@ public struct MilestonesView: View {
         .allowsHitTesting(false)
     }
     
-    public var body: some View {
+    private var allMilestones: [Milestone] {
         let profile = profileStore.selectedProfile
         let math = LifeMath(dateOfBirth: profile.effectiveDateOfBirth)
-        var allMilestones = math.calculateMilestones()
-
+        var milestones = math.calculateMilestones()
+        
         // Append Shared Bonds milestones for each tracked person
         for person in profile.trackedPeople {
-            allMilestones.append(contentsOf: math.calculateSharedMilestones(for: person))
+            milestones.append(contentsOf: math.calculateSharedMilestones(for: person))
         }
-
+        
         // Re-sort after appending
-        allMilestones.sort { ($0.date ?? .distantFuture) < ($1.date ?? .distantFuture) }
+        milestones.sort { ($0.date ?? .distantFuture) < ($1.date ?? .distantFuture) }
+        return milestones
+    }
+    
+    public var body: some View {
         
         ZStack {
             Color.vitalzBackground.ignoresSafeArea()
