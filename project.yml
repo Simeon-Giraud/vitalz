@@ -13,6 +13,9 @@ targets:
       properties:
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: ["health-records"]
+        com.apple.security.application-groups: ["group.com.simeon.vitalz"]
+    dependencies:
+      - target: VitalzWidgetExtension
     settings:
       INFOPLIST_FILE: Sources/Vitalz/Info.plist
       PRODUCT_BUNDLE_IDENTIFIER: com.simeon.vitalz
@@ -26,6 +29,34 @@ targets:
       PROVISIONING_PROFILE_SPECIFIER: ""
       DEVELOPMENT_TEAM: ""
       AD_HOC_CODE_SIGNING_ALLOWED: YES
+
+  VitalzWidgetExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: Sources/VitalzWidget
+      # Shared source files reused by the widget (no framework needed)
+      - path: Sources/Vitalz/LifeMath.swift
+      - path: Sources/Vitalz/ProfileStore.swift
+      - path: Sources/Vitalz/WidgetDataBridge.swift
+    entitlements:
+      path: Sources/VitalzWidget/VitalzWidget.entitlements
+      properties:
+        com.apple.security.application-groups: ["group.com.simeon.vitalz"]
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.simeon.vitalz.widget
+      MARKETING_VERSION: 1.0.0
+      CURRENT_PROJECT_VERSION: 1
+      CODE_SIGNING_ALLOWED: NO
+      CODE_SIGNING_REQUIRED: NO
+      CODE_SIGN_IDENTITY: ""
+      CODE_SIGN_ENTITLEMENTS: "Sources/VitalzWidget/VitalzWidget.entitlements"
+      CODE_SIGN_STYLE: Manual
+      PROVISIONING_PROFILE_SPECIFIER: ""
+      DEVELOPMENT_TEAM: ""
+      AD_HOC_CODE_SIGNING_ALLOWED: YES
+      INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier: com.apple.widgetkit-extension
 
   VitalzUITests:
     type: bundle.ui-testing
@@ -43,6 +74,7 @@ schemes:
     build:
       targets:
         Vitalz: all
+        VitalzWidgetExtension: all
     test:
       targets:
         - target: VitalzUITests

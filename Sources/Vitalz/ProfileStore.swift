@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import WidgetKit
 
 public struct VitalzProfile: Codable, Identifiable, Equatable {
     public let id: String
@@ -376,6 +377,10 @@ public final class ProfileStore: ObservableObject {
         guard let data = try? JSONEncoder().encode(profiles) else { return }
         defaults.set(data, forKey: profilesKey)
         saveLegacySelectedProfile()
+
+        // Push the selected profile to the widget via App Group
+        WidgetDataBridge.writeProfile(selectedProfile)
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     private func saveSelectedProfileID() {
