@@ -102,31 +102,36 @@ public struct DashboardView: View {
             
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
-                    // Header
-                    HStack {
-                        ProfileAvatarView(imageData: profileStore.selectedProfile.imageData, size: 44)
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(userName)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.vitalzSecondaryText)
-                            
-                            Text(Date(), style: .date)
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundColor(.vitalzText)
+                    // Profile Header — centered, tappable for Settings
+                    VStack(spacing: 10) {
+                        Button {
+                            showingSettings = true
+                        } label: {
+                            ProfileAvatarView(
+                                imageData: profileStore.selectedProfile.imageData,
+                                size: 70
+                            )
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.vitalzAccent.opacity(0.3), lineWidth: 2)
+                                    .frame(width: 76, height: 76)
+                            )
                         }
-                        
-                        Spacer()
-                        
-                        VitalzGlassButton(shape: .circle, isProminent: false, action: { showingSettings = true }) {
-                            Image(systemName: "gearshape")
-                                .font(.system(size: 20))
+                        .buttonStyle(.plain)
+
+                        VStack(spacing: 4) {
+                            Text(userName)
+                                .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.vitalzText)
-                                .padding(12)
+
+                            Text(Date(), style: .date)
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(.vitalzSecondaryText)
                         }
                     }
-                    .padding(.horizontal, 20)
+                    .frame(maxWidth: .infinity)
                     .padding(.top, 16)
+                    .padding(.bottom, 4)
                     
                     if let stats = stats {
                         let elements = generateElements(from: stats, profile: profileStore.selectedProfile)
