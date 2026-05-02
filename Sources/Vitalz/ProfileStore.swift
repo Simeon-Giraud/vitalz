@@ -144,6 +144,20 @@ public struct VitalzProfile: Codable, Identifiable, Equatable {
         }
     }
 
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        try c.encode(dateOfBirthTimestamp, forKey: .dateOfBirthTimestamp)
+        try c.encodeIfPresent(imageData, forKey: .imageData)
+        try c.encodeIfPresent(birthTimeTimestamp, forKey: .birthTimeTimestamp)
+        try c.encode(birthCity, forKey: .birthCity)
+        try c.encode(hobbies, forKey: .hobbies)
+        try c.encode(trackedPeople, forKey: .trackedPeople)
+        try c.encodeIfPresent(heightCentimeters, forKey: .heightCentimeters)
+        try c.encodeIfPresent(readingSpeed, forKey: .readingSpeed)
+    }
+
     public var dateOfBirth: Date {
         Date(timeIntervalSince1970: dateOfBirthTimestamp)
     }

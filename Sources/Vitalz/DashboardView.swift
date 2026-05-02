@@ -287,12 +287,12 @@ public struct DashboardView: View {
         Group {
             switch element {
             case .card(let card):
-                if card.id == .passionEra && card.isFullWidth {
+                if card.id == .passionEra && card.isFullWidth, let stats {
                     Button(action: { selectCard(card) }) {
                         EraShareGridCardView(
                             card: card,
                             hobbies: profileStore.selectedProfile.hobbies.filter { $0.isEnabled },
-                            stats: currentStats,
+                            stats: stats,
                             animation: animation,
                             isSelected: selectedCardID == card.id
                         )

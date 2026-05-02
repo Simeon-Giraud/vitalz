@@ -4,6 +4,8 @@ public struct FriendsView: View {
     @EnvironmentObject private var profileStore: ProfileStore
     @State private var selectedPerson: TrackedPerson?
     @State private var showingAddPerson = false
+    @State private var showingSignature = false
+    @State private var showingScanner = false
 
     public init() {}
 
@@ -43,12 +45,30 @@ public struct FriendsView: View {
 
                         Spacer()
 
-                        VitalzGlassButton(shape: .circle, isProminent: true) {
-                            showingAddPerson = true
-                        } content: {
-                            Image(systemName: "plus")
-                                .font(.system(size: 16, weight: .bold))
-                                .padding(12)
+                        HStack(spacing: 10) {
+                            VitalzGlassButton(shape: .circle, isProminent: false) {
+                                showingScanner = true
+                            } content: {
+                                Image(systemName: "qrcode.viewfinder")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .padding(12)
+                            }
+
+                            VitalzGlassButton(shape: .circle, isProminent: false) {
+                                showingSignature = true
+                            } content: {
+                                Image(systemName: "qrcode")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .padding(12)
+                            }
+
+                            VitalzGlassButton(shape: .circle, isProminent: true) {
+                                showingAddPerson = true
+                            } content: {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .padding(12)
+                            }
                         }
                     }
                     .padding(.horizontal, 24)
@@ -92,6 +112,14 @@ public struct FriendsView: View {
         }
         .sheet(isPresented: $showingAddPerson) {
             AddPersonView()
+                .environmentObject(profileStore)
+        }
+        .fullScreenCover(isPresented: $showingSignature) {
+            VitalzSignatureView()
+                .environmentObject(profileStore)
+        }
+        .fullScreenCover(isPresented: $showingScanner) {
+            SignatureScannerView()
                 .environmentObject(profileStore)
         }
     }
