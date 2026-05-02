@@ -74,21 +74,55 @@ public struct FriendsView: View {
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
 
-                    // Grid
-                    let columns = [GridItem(.flexible()), GridItem(.flexible())]
-
-                    LazyVGrid(columns: columns, spacing: 16) {
-                        ForEach(profileStore.selectedProfile.trackedPeople) { person in
-                            PersonCard(person: person)
-                                .onTapGesture {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                        selectedPerson = person
-                                    }
-                                }
+                    if profileStore.selectedProfile.trackedPeople.isEmpty {
+                        VStack(spacing: 24) {
+                            Image("VitalzLogo")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 48)
+                                .opacity(0.8)
+                            
+                            VStack(spacing: 8) {
+                                Text("Your Orbit is empty.")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.vitalzText)
+                                
+                                Text("Add friends to track your shared journey.")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.vitalzSecondaryText)
+                            }
+                            
+                            Button(action: { showingAddPerson = true }) {
+                                Text("Add Friend")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 24)
+                                    .padding(.vertical, 12)
+                                    .background(Color.vitalzAccent)
+                                    .cornerRadius(20)
+                            }
+                            .padding(.top, 8)
                         }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 60)
+                        .padding(.bottom, 100)
+                    } else {
+                        // Grid
+                        let columns = [GridItem(.flexible()), GridItem(.flexible())]
+
+                        LazyVGrid(columns: columns, spacing: 16) {
+                            ForEach(profileStore.selectedProfile.trackedPeople) { person in
+                                PersonCard(person: person)
+                                    .onTapGesture {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                            selectedPerson = person
+                                        }
+                                    }
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 100)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 100)
                 }
             }
             .overlay(alignment: .top) {

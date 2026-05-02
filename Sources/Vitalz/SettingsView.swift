@@ -44,6 +44,21 @@ public struct SettingsView: View {
                         } else {
                             profilesSection
                         }
+
+                        // Footer Logo
+                        VStack(spacing: 6) {
+                            Image("VitalzLogo")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 18)
+                                .opacity(0.8)
+                            
+                            Text("VITALZ")
+                                .font(.caption2)
+                                .kerning(2)
+                                .foregroundColor(.vitalzSecondaryText)
+                        }
+                        .padding(.top, 40)
                     }
                     .padding(24)
                     .padding(.bottom, 40)

@@ -156,7 +156,15 @@ public struct DashboardView: View {
                             }
                         }
                         .padding(.horizontal, 16)
-                        .padding(.bottom, 80)
+                        
+                        // Scroll Anchor Logo
+                        Image("VitalzLogo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 16)
+                            .opacity(0.3)
+                            .padding(.top, 60)
+                            .padding(.bottom, 100)
                     }
                 }
             }
