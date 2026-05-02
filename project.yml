@@ -26,9 +26,32 @@ targets:
       PROVISIONING_PROFILE_SPECIFIER: ""
       DEVELOPMENT_TEAM: ""
       AD_HOC_CODE_SIGNING_ALLOWED: YES
+
+  VitalzUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: Sources/VitalzUITests
+    dependencies:
+      - target: Vitalz
+    settings:
+      CODE_SIGNING_ALLOWED: NO
+      CODE_SIGNING_REQUIRED: NO
+      CODE_SIGN_IDENTITY: ""
 schemes:
   Vitalz:
     build:
       targets:
-        Vitalz: [run, test, profile, analyze]
+        Vitalz: all
+    test:
+      targets:
+        - target: VitalzUITests
+    run:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
 

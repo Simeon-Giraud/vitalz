@@ -40,9 +40,23 @@ jobs:
       - name: List Schemes
         run: xcodebuild -list -project Vitalz.xcodeproj
 
-      - name: Build and Test
+      - name: Build App
         run: |
-          xcodebuild test \
+          xcodebuild build \
+            -project Vitalz.xcodeproj \
+            -scheme Vitalz \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$DERIVED_DATA_PATH" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_IDENTITY="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            COMPILER_INDEX_STORE_ENABLE=NO
+
+      - name: Run Tests
+        run: |
+          xcodebuild test-without-building \
             -project Vitalz.xcodeproj \
             -scheme Vitalz \
             -sdk iphonesimulator \
@@ -52,8 +66,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_IDENTITY="" \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            COMPILER_INDEX_STORE_ENABLE=NO
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
         continue-on-error: true
 
       - name: Extract Screenshots
