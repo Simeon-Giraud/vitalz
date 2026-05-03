@@ -27,7 +27,8 @@ public struct ShareCardView: View {
                     .frame(height: 360)
 
                 // Subtitle label
-                Text(subtitle.uppercased())
+                Text(subtitle)
+                    .textCase(.uppercase)
                     .font(.system(size: 32, weight: .medium))
                     .foregroundColor(Color(hex: "#999999"))
                     .kerning(6)

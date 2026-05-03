@@ -183,7 +183,8 @@ private struct SignaturePreviewSheet: View {
                         .fill(Color(white: 0.25))
                         .frame(width: 72, height: 72)
 
-                    Text(String(signature.name.prefix(1)).uppercased())
+                    Text(String(signature.name.prefix(1)))
+                        .textCase(.uppercase)
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                 }
