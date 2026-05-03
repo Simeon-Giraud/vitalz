@@ -88,6 +88,7 @@ public struct VitalzSignatureView: View {
                                         hobby: hobby,
                                         isSelected: selectedHobbyIDs.contains(hobby.id),
                                         toggle: {
+                                            HapticEngine.playMechanicalClick()
                                             if selectedHobbyIDs.contains(hobby.id) {
                                                 selectedHobbyIDs.remove(hobby.id)
                                             } else {

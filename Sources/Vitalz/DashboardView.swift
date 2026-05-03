@@ -395,12 +395,14 @@ public struct DashboardView: View {
     }
 
     private func selectCard(_ card: CardData) {
+        HapticEngine.playTick()
         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
             selectedCardID = card.id
         }
     }
     
     private func closeCard() {
+        HapticEngine.playTick()
         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
             selectedCardID = nil
         }

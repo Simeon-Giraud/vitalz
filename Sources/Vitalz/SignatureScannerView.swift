@@ -399,9 +399,7 @@ private final class CameraScannerViewController: UIViewController, AVCaptureMeta
 
         hasScanned = true
 
-        // Haptic feedback
-        let generator = UIImpactFeedbackGenerator(style: .medium)
-        generator.impactOccurred()
+        HapticEngine.playSuccess()
 
         onCodeScanned?(value)
 
