@@ -8,6 +8,7 @@ public struct SettingsView: View {
 
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     @AppStorage("appTheme") private var appTheme: Int = 0 // 0: System, 1: Light, 2: Dark
+    @AppStorage("wallpaperTheme") private var wallpaperThemeRaw: String = WallpaperTheme.standardLight.rawValue
     @AppStorage("accentTheme") private var accentTheme: String = AccentTheme.electricBlue.rawValue
 
     @AppStorage("showSecondsAlive") private var showSecondsAlive: Bool = true
@@ -120,21 +121,50 @@ public struct SettingsView: View {
     
     private var appearanceSection: some View {
         VStack(alignment: .leading, spacing: 32) {
-            // Theme Picker
+            // Wallpaper Theme Swatches
             VStack(alignment: .leading, spacing: 12) {
-                Text("Theme")
+                Text("Wallpaper")
                     .font(.system(size: 14, weight: .regular))
                     .foregroundColor(.vitalzSecondaryText)
-                
-                Picker("Theme", selection: $appTheme) {
-                    Text("System").tag(0)
-                    Text("Light").tag(1)
-                    Text("Dark").tag(2)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 16) {
+                        ForEach(WallpaperTheme.allCases) { theme in
+                            Button {
+                                HapticEngine.playMechanicalClick()
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    wallpaperThemeRaw = theme.rawValue
+                                }
+                            } label: {
+                                VStack(spacing: 8) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .fill(theme.textColor == .white ? Color.black : Color.white)
+                                            .overlay(theme.backgroundView.clipShape(RoundedRectangle(cornerRadius: 16)))
+                                            .frame(width: 80, height: 120)
+                                            .shadow(color: Color.black.opacity(0.1), radius: 5, y: 2)
+
+                                        if wallpaperThemeRaw == theme.rawValue {
+                                            RoundedRectangle(cornerRadius: 20)
+                                                .stroke(Color.vitalzText, lineWidth: 2)
+                                                .frame(width: 88, height: 128)
+
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .font(.system(size: 20))
+                                                .foregroundColor(theme.textColor)
+                                        }
+                                    }
+                                    Text(theme.displayName)
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(wallpaperThemeRaw == theme.rawValue ? .vitalzText : .vitalzSecondaryText)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 8)
                 }
-                .pickerStyle(.segmented)
-                .padding(16)
-                .background(Color.vitalzCard)
-                .cornerRadius(16)
             }
             
             // Accent Color Picker

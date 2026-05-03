@@ -59,6 +59,7 @@ public struct DashboardView: View {
     @AppStorage("showSpaceTraveler") private var showSpaceTraveler: Bool = true
     @AppStorage("useMetricUnits") private var useMetricUnits: Bool = true
     @AppStorage("cardOrder") private var cardOrder: String = ""
+    @AppStorage("wallpaperTheme") private var wallpaperThemeRaw: String = WallpaperTheme.standardLight.rawValue
     @AppStorage("averageScreenTime") private var averageScreenTime: Double = 0.0
     @AppStorage("dailyCoffeeCups") private var dailyCoffeeCups: Int = 0
     
@@ -70,6 +71,10 @@ public struct DashboardView: View {
     
     @Namespace private var animation
     @State private var selectedCardID: CardData.ID? = nil
+    
+    private var activeWallpaper: WallpaperTheme {
+        WallpaperTheme(rawValue: wallpaperThemeRaw) ?? .standardLight
+    }
     
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
@@ -122,16 +127,24 @@ public struct DashboardView: View {
                         VStack(spacing: 4) {
                             Text(userName)
                                 .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.vitalzText)
+                                .foregroundColor(activeWallpaper == .standardLight || activeWallpaper == .standardDark ? .vitalzText : activeWallpaper.textColor)
 
                             Text(Date(), style: .date)
                                 .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(.vitalzSecondaryText)
+                                .foregroundColor(activeWallpaper == .standardLight || activeWallpaper == .standardDark ? .vitalzSecondaryText : activeWallpaper.textColor.opacity(0.7))
                         }
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.top, 16)
-                    .padding(.bottom, 4)
+                    .padding(.bottom, 24)
+                    .background(
+                        Group {
+                            if activeWallpaper != .standardLight && activeWallpaper != .standardDark {
+                                activeWallpaper.backgroundView
+                                    .ignoresSafeArea(edges: .top)
+                            }
+                        }
+                    )
                     
                     if let stats = stats {
                         let elements = generateElements(from: stats, profile: profileStore.selectedProfile)
