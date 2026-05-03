@@ -13,7 +13,7 @@ public enum WallpaperTheme: String, CaseIterable, Identifiable {
 
     public var id: String { rawValue }
 
-    public var displayName: String {
+    public var displayName: LocalizedStringResource {
         switch self {
         case .standardLight: return "Light"
         case .standardDark: return "Dark"

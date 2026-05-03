@@ -7,11 +7,11 @@ import Photos
 /// A premium 9:16 card rendered off-screen at 1080×1920 pixels.
 /// Pure white background, dark typography, heavy negative space, editorial print aesthetic.
 public struct ShareCardView: View {
-    let milestoneTitle: String
-    let subtitle: String
-    let statValue: String
+    let milestoneTitle: LocalizedStringResource
+    let subtitle: LocalizedStringResource
+    let statValue: LocalizedStringResource
 
-    public init(milestoneTitle: String, subtitle: String, statValue: String) {
+    public init(milestoneTitle: LocalizedStringResource, subtitle: LocalizedStringResource, statValue: LocalizedStringResource) {
         self.milestoneTitle = milestoneTitle
         self.subtitle = subtitle
         self.statValue = statValue
@@ -75,9 +75,9 @@ public enum CardRenderer {
 
     /// Renders the share card to a high-resolution 1080×1920 UIImage.
     public static func renderImage(
-        title: String,
-        subtitle: String,
-        statValue: String
+        title: LocalizedStringResource,
+        subtitle: LocalizedStringResource,
+        statValue: LocalizedStringResource
     ) -> UIImage? {
         let card = ShareCardView(
             milestoneTitle: title,
@@ -96,15 +96,15 @@ public enum CardRenderer {
 /// A SwiftUI sheet that presents three explicit sharing options:
 /// Save to Photos, Share to Instagram Stories, and the native share sheet.
 public struct ShareActionSheet: View {
-    let milestoneTitle: String
-    let subtitle: String
-    let statValue: String
+    let milestoneTitle: LocalizedStringResource
+    let subtitle: LocalizedStringResource
+    let statValue: LocalizedStringResource
 
     @Environment(\.dismiss) private var dismiss
     @State private var feedbackMessage: String?
     @State private var showFeedback = false
 
-    public init(milestoneTitle: String, subtitle: String, statValue: String) {
+    public init(milestoneTitle: LocalizedStringResource, subtitle: LocalizedStringResource, statValue: LocalizedStringResource) {
         self.milestoneTitle = milestoneTitle
         self.subtitle = subtitle
         self.statValue = statValue

@@ -15,6 +15,19 @@ public enum AccentTheme: String, CaseIterable, Identifiable {
     
     public var id: String { rawValue }
     
+    public var localizedName: LocalizedStringResource {
+        switch self {
+        case .electricBlue: return "Electric Blue"
+        case .violet: return "Violet"
+        case .rose: return "Rose"
+        case .emerald: return "Emerald"
+        case .amber: return "Amber"
+        case .coral: return "Coral"
+        case .teal: return "Teal"
+        case .indigo: return "Indigo"
+        }
+    }
+    
     public var color: Color {
         switch self {
         case .electricBlue: return Color(hex: "#007AFF")

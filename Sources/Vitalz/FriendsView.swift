@@ -38,7 +38,7 @@ public struct FriendsView: View {
                                 .foregroundColor(.vitalzText)
 
                             let count = profileStore.selectedProfile.trackedPeople.count
-                            Text("\(count) \(count == 1 ? "person" : "people") tracked")
+                            Text("^[\(count) person](inflect: true) tracked")
                                 .font(.system(size: 15, weight: .medium))
                                 .foregroundColor(.vitalzSecondaryText)
                         }
@@ -190,7 +190,7 @@ struct PersonCard: View {
             }
 
             VStack(spacing: 2) {
-                Text("\(sharedDays)")
+                Text("\(sharedDays, format: .number)")
                     .font(.system(size: 20, weight: .black))
                     .foregroundColor(Color.vitalzAccent)
 

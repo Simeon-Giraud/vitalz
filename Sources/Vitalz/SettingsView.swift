@@ -196,8 +196,7 @@ public struct SettingsView: View {
                                             .foregroundColor(.white)
                                     }
                                 }
-                                
-                                Text(theme.rawValue.components(separatedBy: " ").first ?? theme.rawValue)
+                                Text(theme.localizedName)
                                     .font(.system(size: 10, weight: selectedAccent == theme ? .bold : .medium))
                                     .foregroundColor(selectedAccent == theme ? .vitalzText : .vitalzSecondaryText)
                             }

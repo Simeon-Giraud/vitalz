@@ -233,7 +233,7 @@ struct NextMilestoneBanner: View {
             }
             
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text("\(daysLeft)")
+                Text("\(daysLeft, format: .number)")
                     .font(.system(size: 36, weight: .bold, design: .monospaced))
                     .foregroundColor(.vitalzAccent)
                 Text("days away")
@@ -351,8 +351,13 @@ struct TimelineMilestoneRow: View {
                     HStack(spacing: 4) {
                         Image(systemName: "clock")
                             .font(.system(size: 10))
-                        Text(days == 0 ? "Today!" : "\(days) days away")
-                            .font(.system(size: 11, weight: .semibold))
+                        if days == 0 {
+                            Text("Today!")
+                                .font(.system(size: 11, weight: .semibold))
+                        } else {
+                            Text("^[\(days) days](inflect: true) away")
+                                .font(.system(size: 11, weight: .semibold))
+                        }
                     }
                     .foregroundColor(accentColor.opacity(0.8))
                     .padding(.top, 2)
