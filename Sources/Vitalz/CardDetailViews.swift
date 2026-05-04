@@ -195,7 +195,7 @@ struct CardVisualization: View {
     }
     
     private func digitAt(_ index: Int) -> Int {
-        let str = card.value.filter { $0.isNumber }
+        let str = String(localized: card.value).filter { $0.isNumber }
         let chars = Array(str)
         let reversed = Array(chars.reversed())
         let digitIndex = 5 - index
