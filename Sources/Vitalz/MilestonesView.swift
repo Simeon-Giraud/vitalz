@@ -7,6 +7,7 @@ public struct MilestonesView: View {
     
     @State private var currentDate = Date()
     @State private var selectedCategory: Milestone.MilestoneCategory? = nil
+    @State private var selectedMilestone: Milestone? = nil
     private let timer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
     
     public init() {}
@@ -127,6 +128,11 @@ public struct MilestonesView: View {
                                             accentColor: categoryColor(milestone.category),
                                             isLast: milestone.id == items.last?.id
                                         )
+                                        .onTapGesture {
+                                            if (milestone.date ?? .distantFuture) <= currentDate {
+                                                selectedMilestone = milestone
+                                            }
+                                        }
                                     }
                                 }
                                 .padding(.horizontal, 24)
@@ -150,6 +156,9 @@ public struct MilestonesView: View {
                     notificationManager.hasPermission = settings.authorizationStatus == .authorized
                 }
             }
+        }
+        .fullScreenCover(item: $selectedMilestone) { milestone in
+            MilestoneDetailView(milestone: milestone)
         }
     }
     

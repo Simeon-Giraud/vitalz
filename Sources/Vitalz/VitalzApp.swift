@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct VitalzApp: App {
@@ -29,6 +30,7 @@ struct VitalzApp: App {
             // Force animation on state change
             .animation(.easeInOut(duration: 0.8), value: hasCompletedOnboarding)
         }
+        .modelContainer(for: MilestoneVaultEntry.self)
     }
     
     private var selectedColorScheme: ColorScheme? {
