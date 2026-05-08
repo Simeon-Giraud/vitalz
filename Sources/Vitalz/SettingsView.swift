@@ -794,9 +794,27 @@ struct ProfileEditorView: View {
             return
         }
 
-        if let image = UIImage(data: data),
-           let compressedData = image.jpegData(compressionQuality: 0.75) {
-            imageData = compressedData
+        if let image = UIImage(data: data) {
+            // Downsample to max 512x512 to prevent UserDefaults bloat
+            let maxSize: CGFloat = 512
+            let scale = min(maxSize / image.size.width, maxSize / image.size.height)
+            
+            if scale < 1.0 {
+                let newSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+                UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+                image.draw(in: CGRect(origin: .zero, size: newSize))
+                let downsampledImage = UIGraphicsGetImageFromCurrentImageContext()
+                UIGraphicsEndImageContext()
+                
+                imageData = downsampledImage?.jpegData(compressionQuality: 0.7) ?? data
+            } else {
+                imageData = image.jpegData(compressionQuality: 0.7) ?? data
+            }
+            
+            // Hard cap at 500KB to ensure UserDefaults safety
+            if let finalData = imageData, finalData.count > 512_000 {
+                imageData = UIImage(data: finalData)?.jpegData(compressionQuality: 0.3) ?? finalData
+            }
         } else {
             imageData = data
         }

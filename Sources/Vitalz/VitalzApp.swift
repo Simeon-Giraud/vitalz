@@ -11,6 +11,9 @@ struct VitalzApp: App {
 
     @StateObject private var profileStore = ProfileStore()
     
+    /// Signature decoded from an incoming `vitalz://` deep link.
+    @State private var incomingSignature: VitalzSignature?
+    
     var body: some Scene {
         WindowGroup {
             ZStack {
@@ -29,6 +32,14 @@ struct VitalzApp: App {
             .preferredColorScheme(selectedColorScheme)
             // Force animation on state change
             .animation(.easeInOut(duration: 0.8), value: hasCompletedOnboarding)
+            .onOpenURL { url in
+                guard let signature = VitalzSignature.decode(from: url)?.validated() else { return }
+                incomingSignature = signature
+            }
+            .sheet(item: $incomingSignature) { sig in
+                DeepLinkImportView(signature: sig)
+                    .environmentObject(profileStore)
+            }
         }
         .modelContainer(for: MilestoneVaultEntry.self)
     }

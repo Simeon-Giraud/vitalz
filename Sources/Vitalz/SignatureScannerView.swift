@@ -113,10 +113,11 @@ public struct SignatureScannerView: View {
         // Prevent re-triggering while a sheet is showing
         guard scannedSignature == nil else { return }
 
-        // Try decoding from deep link first, then raw base64
-        if let url = URL(string: code), let sig = VitalzSignature.decode(from: url) {
+        // Try decoding from deep link first, then raw base64.
+        // Validate at the trust boundary before presenting.
+        if let url = URL(string: code), let sig = VitalzSignature.decode(from: url)?.validated() {
             scannedSignature = sig
-        } else if let sig = VitalzSignature.decode(from: code) {
+        } else if let sig = VitalzSignature.decode(from: code)?.validated() {
             scannedSignature = sig
         }
     }

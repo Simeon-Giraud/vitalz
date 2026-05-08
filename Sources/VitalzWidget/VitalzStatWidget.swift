@@ -92,7 +92,7 @@ struct VitalzStatProvider: AppIntentTimelineProvider {
     // MARK: - Computation
 
     private func computeEntry(for stat: WidgetStat, at date: Date) -> Entry {
-        guard let profile = WidgetDataBridge.readProfile() else {
+        guard let profile = WidgetDataBridge.readSnapshot() else {
             return VitalzWidgetEntry(date: date, statValue: "—", statCaption: "NO DATA", hasData: false)
         }
 
@@ -118,8 +118,8 @@ struct VitalzStatProvider: AppIntentTimelineProvider {
             value = formatLargeNumber(Int(stats.estimatedHoursSlept))
 
         case .eraShare:
-            if let hobby = profile.hobbies.first(where: { $0.isEnabled }) {
-                let hobbyDays = max(0, calendar.dateComponents([.day], from: hobby.startDate, to: date).day ?? 0)
+            if let startDate = profile.primaryHobbyStartDate {
+                let hobbyDays = max(0, calendar.dateComponents([.day], from: startDate, to: date).day ?? 0)
                 let pct = stats.totalDaysAlive > 0 ? (Double(hobbyDays) / Double(stats.totalDaysAlive)) * 100.0 : 0
                 value = String(format: "%.1f%%", pct)
             } else {
@@ -127,8 +127,8 @@ struct VitalzStatProvider: AppIntentTimelineProvider {
             }
 
         case .sharedDays:
-            if let person = profile.trackedPeople.first {
-                let shared = max(0, calendar.dateComponents([.day], from: person.metDate, to: date).day ?? 0)
+            if let metDate = profile.primaryPersonMetDate {
+                let shared = max(0, calendar.dateComponents([.day], from: metDate, to: date).day ?? 0)
                 value = formatLargeNumber(shared)
             } else {
                 value = "—"

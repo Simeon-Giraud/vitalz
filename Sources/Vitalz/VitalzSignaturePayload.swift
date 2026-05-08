@@ -4,7 +4,9 @@ import Foundation
 
 /// A lightweight, self-contained payload that encodes a user's shareable profile.
 /// Designed for offline QR code and deep link transmission — zero server dependency.
-public struct VitalzSignature: Codable, Equatable {
+public struct VitalzSignature: Codable, Equatable, Identifiable, Hashable {
+
+    public var id: String { name + String(dateOfBirthTimestamp) }
 
     /// The shared first name of the sender.
     public let name: String
@@ -16,7 +18,7 @@ public struct VitalzSignature: Codable, Equatable {
     public let hobbies: [SharedHobby]
 
     /// A minimal hobby representation stripped of internal IDs and toggle state.
-    public struct SharedHobby: Codable, Equatable, Identifiable {
+    public struct SharedHobby: Codable, Equatable, Identifiable, Hashable {
         public var id: String { title + String(startTimestamp) }
         public let title: String
         public let startTimestamp: Double
@@ -57,6 +59,42 @@ public struct VitalzSignature: Codable, Equatable {
             .map { SharedHobby(title: $0.title, startTimestamp: $0.startTimestamp, hoursPerWeek: $0.hoursPerWeek, icon: $0.icon) }
     }
 
+    // MARK: - Validation
+    
+    /// Hard limits to prevent malicious QR payloads from injecting garbage data.
+    private static let maxNameLength = 100
+    private static let maxHobbies = 20
+    private static let maxStringFieldLength = 200
+    private static let maxHoursPerWeek: Double = 168
+    /// Earliest reasonable DOB: year 1900
+    private static let minTimestamp: Double = -2_208_988_800
+    /// Latest reasonable DOB: year 2100
+    private static let maxTimestamp: Double = 4_102_444_800
+    
+    /// Returns a sanitized copy of this signature, or nil if the payload is fundamentally invalid.
+    public func validated() -> VitalzSignature? {
+        let trimmedName = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxNameLength))
+        guard !trimmedName.isEmpty else { return nil }
+        
+        guard dateOfBirthTimestamp >= Self.minTimestamp,
+              dateOfBirthTimestamp <= Self.maxTimestamp else { return nil }
+        
+        let sanitizedHobbies = hobbies.prefix(Self.maxHobbies).compactMap { hobby -> SharedHobby? in
+            let title = String(hobby.title.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxStringFieldLength))
+            guard !title.isEmpty else { return nil }
+            
+            let icon = String(hobby.icon.prefix(Self.maxStringFieldLength))
+            let hours = min(max(hobby.hoursPerWeek, 0), Self.maxHoursPerWeek)
+            
+            guard hobby.startTimestamp >= Self.minTimestamp,
+                  hobby.startTimestamp <= Self.maxTimestamp else { return nil }
+            
+            return SharedHobby(title: title, startTimestamp: hobby.startTimestamp, hoursPerWeek: hours, icon: icon)
+        }
+        
+        return VitalzSignature(name: trimmedName, dateOfBirthTimestamp: dateOfBirthTimestamp, hobbies: Array(sanitizedHobbies))
+    }
+
     // MARK: - Encoding
 
     /// Encodes the signature to a URL-safe Base64 string.
@@ -77,7 +115,10 @@ public struct VitalzSignature: Codable, Equatable {
     // MARK: - Decoding
 
     /// Decodes a VitalzSignature from a URL-safe Base64 string.
+    /// Rejects payloads larger than 50KB to prevent memory abuse.
     public static func decode(from base64String: String) -> VitalzSignature? {
+        guard base64String.count <= 65_536 else { return nil }
+        
         // Restore standard Base64
         var restored = base64String
             .replacingOccurrences(of: "-", with: "+")
@@ -89,7 +130,8 @@ public struct VitalzSignature: Codable, Equatable {
             restored += String(repeating: "=", count: 4 - remainder)
         }
 
-        guard let data = Data(base64Encoded: restored) else { return nil }
+        guard let data = Data(base64Encoded: restored),
+              data.count <= 51_200 else { return nil }
         return try? JSONDecoder().decode(VitalzSignature.self, from: data)
     }
 
@@ -103,3 +145,4 @@ public struct VitalzSignature: Codable, Equatable {
         return decode(from: dataParam)
     }
 }
+

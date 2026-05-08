@@ -26,9 +26,10 @@ public class HealthKitManager: ObservableObject {
     public func requestAuthorization() async -> Bool {
         guard HKHealthStore.isHealthDataAvailable() else { return false }
         
+        let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
         let typesToRead: Set<HKObjectType> = [
             HKObjectType.characteristicType(forIdentifier: .dateOfBirth)!,
-            HKObjectType.quantityType(forIdentifier: .heartRate)!,
+            heartRateType,
             HKObjectType.quantityType(forIdentifier: .stepCount)!,
             HKObjectType.quantityType(forIdentifier: .respiratoryRate)!,
             HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!
@@ -36,8 +37,17 @@ public class HealthKitManager: ObservableObject {
         
         do {
             try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
-            isAuthorized = true
-            return true
+            
+            // HealthKit requestAuthorization() succeeding just means the prompt was presented and dismissed.
+            // We must manually check if we actually have permission for core types.
+            let heartRateStatus = healthStore.authorizationStatus(for: heartRateType)
+            if heartRateStatus == .sharingAuthorized {
+                isAuthorized = true
+                return true
+            } else {
+                isAuthorized = false
+                return false
+            }
         } catch {
             print("HealthKit Authorization Error: \(error.localizedDescription)")
             isAuthorized = false
