@@ -157,7 +157,7 @@ public struct SignatureScannerView: View {
 // MARK: - Signature Preview Sheet
 
 /// The dark grey half-sheet showing the decoded friend data before committing.
-private struct SignaturePreviewSheet: View {
+struct SignaturePreviewSheet: View {
     let signature: VitalzSignature
     let onAdd: () -> Void
 
