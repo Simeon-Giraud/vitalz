@@ -282,11 +282,6 @@ private struct SignaturePreviewSheet: View {
     }
 }
 
-// MARK: - Identifiable conformance for sheet binding
-
-extension VitalzSignature: Identifiable {
-    public var id: String { name + String(dateOfBirthTimestamp) }
-}
 
 // MARK: - AVFoundation Camera Scanner
 
